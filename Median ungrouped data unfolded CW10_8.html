@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Size - Median Animation</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --highlight: #ef4444;
+            --bg-table-header: #e0f2fe;
+            --bg-table-row: #f1f5f9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        /* Table Styling */
+        .table-container {
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 10;
+        }
+
+        table {
+            border-collapse: collapse;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            border: 1px solid #94a3b8;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        th {
+            background-color: var(--bg-table-header);
+            font-weight: bold;
+            text-align: left;
+            width: 180px; /* Slightly wider for the text */
+        }
+
+        td {
+            width: 40px;
+            background-color: #fff;
+            font-weight: 500;
+        }
+
+        /* Animation Stage */
+        .stage {
+            width: 100%;
+            max-width: 940px;
+            min-height: 300px;
+            position: relative;
+            border-top: 2px dashed #cbd5e1;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .info-panel {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            height: 30px;
+            color: #475569;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            transition: color 0.3s;
+        }
+
+        .items-container {
+            position: relative;
+            width: 100%;
+        }
+
+        /* The Moving Number Balls */
+        .num-ball {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            opacity: 0;
+            position: absolute; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: background-color 0.5s, transform 0.3s, border-color 0.5s, box-shadow 0.5s;
+        }
+
+        /* Class added during animation fly-in */
+        .num-ball.moving {
+             transition: left 0.6s cubic-bezier(0.25, 1, 0.5, 1), top 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .num-ball.median {
+            background-color: var(--highlight);
+            transform: scale(1.25);
+            z-index: 20;
+            border: 3px solid white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+        }
+
+        .num-ball.dimmed {
+            background-color: #94a3b8;
+            opacity: 0.4;
+            box-shadow: none;
+        }
+
+        /* Controls */
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        button {
+            padding: 10px 24px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #0f172a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #334155;
+        }
+
+        button:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        /* Annotation Elements */
+        .median-annotation {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            z-index: 50;
+            top: 0;
+            left: 0;
+        }
+
+        .arrow-up {
+            width: 0; 
+            height: 0; 
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 14px solid var(--highlight);
+            margin-bottom: 2px;
+        }
+
+        .annotation-text {
+            background-color: var(--highlight);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+        }
+
+    </style>
+</head>
+<body>
+
+    <h2>Family Size Distribution</h2>
+
+    <div class="table-container">
+        <table id="dataTable">
+            <tr>
+                <th>Number of members</th>
+                <td id="val-1">1</td>
+                <td id="val-2">2</td>
+                <td id="val-3">3</td>
+                <td id="val-4">4</td>
+                <td id="val-5">5</td>
+                <td id="val-6">6</td>
+            </tr>
+            <tr>
+                <th>Frequency</th>
+                <td>2</td>
+                <td>10</td>
+                <td>14</td>
+                <td>12</td>
+                <td>8</td>
+                <td>3</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="controls">
+        <button id="btnStart" onclick="startAnimation()">Start Animation</button>
+        <button id="btnReset" onclick="resetAnimation()" disabled>Reset</button>
+    </div>
+
+    <div class="stage">
+        <div id="infoText" class="info-panel">Click Start to visualize the data...</div>
+        <div id="itemsContainer" class="items-container">
+            </div>
+        <div id="medianMarker" class="median-annotation">
+            <div class="arrow-up"></div>
+            <div class="annotation-text">Median</div>
+        </div>
+    </div>
+
+    <script>
+        // Data derived from the second image
+        const data = [
+            { val: 1, count: 2 }, 
+            { val: 2, count: 10 }, 
+            { val: 3, count: 14 },
+            { val: 4, count: 12 }, 
+            { val: 5, count: 8 }, 
+            { val: 6, count: 3 }
+        ];
+
+        const container = document.getElementById('itemsContainer');
+        const stage = document.querySelector('.stage');
+        const infoText = document.getElementById('infoText');
+        const medianMarker = document.getElementById('medianMarker');
+        const medianTextLbl = medianMarker.querySelector('.annotation-text');
+        const btnStart = document.getElementById('btnStart');
+        const btnReset = document.getElementById('btnReset');
+
+        let allElements = [];
+
+        function resetAnimation() {
+            container.innerHTML = '';
+            container.style.height = ''; 
+            infoText.innerHTML = 'Click Start to visualize the data...';
+            medianMarker.style.opacity = 0;
+            btnStart.disabled = false;
+            btnReset.disabled = true;
+            allElements = [];
+        }
+
+        function startAnimation() {
+            btnStart.disabled = true;
+            btnReset.disabled = true;
+            resetAnimation(); 
+            btnStart.disabled = true;
+
+            // 1. Flatten data
+            let expandedData = [];
+            data.forEach(group => {
+                for(let i=0; i < group.count; i++) expandedData.push(group.val);
+            });
+
+            const totalMembers = expandedData.length;
+            // Total is 49. Median is the 25th item (index 24)
+            const medianIndex = Math.floor((totalMembers + 1) / 2) - 1; 
+
+            infoText.innerHTML = `Expanding table: <b>${totalMembers}</b> total families...`;
+
+            // 2. Grid Calculations (Prevent Overlap)
+            const ballSize = 34;
+            const gap = 10;
+            const slotSize = ballSize + gap;
+            
+            let containerWidth = container.clientWidth || 940;
+            const itemsPerRow = Math.floor((containerWidth + gap) / slotSize);
+            const totalRows = Math.ceil(totalMembers / itemsPerRow);
+            
+            const rowWidth = itemsPerRow * slotSize - gap;
+            const startXOffset = Math.max(0, (containerWidth - rowWidth) / 2);
+            const topPadding = 20;
+            
+            container.style.height = `${totalRows * slotSize + topPadding + 50}px`;
+
+            // 3. Create items
+            const containerRect = container.getBoundingClientRect();
+
+            expandedData.forEach((val, index) => {
+                const el = document.createElement('div');
+                el.classList.add('num-ball');
+                el.textContent = val;
+                container.appendChild(el);
+
+                // Final Position
+                const row = Math.floor(index / itemsPerRow);
+                const col = index % itemsPerRow;
+                const finalLeft = startXOffset + col * slotSize;
+                const finalTop = topPadding + row * slotSize;
+
+                // Start Position (From table cell)
+                const sourceCell = document.getElementById(`val-${val}`);
+                const sourceRect = sourceCell.getBoundingClientRect();
+                const startLeftAbs = sourceRect.left + sourceRect.width / 2 - ballSize / 2;
+                const startTopAbs = sourceRect.top + sourceRect.height / 2 - ballSize / 2;
+
+                el.style.left = `${startLeftAbs - containerRect.left}px`;
+                el.style.top = `${startTopAbs - containerRect.top}px`;
+
+                allElements.push({ el, val, finalLeft, finalTop });
+            });
+
+            // Force reflow
+            container.offsetHeight;
+
+            // 4. Animate with Specific Pause before 3
+            let currentDelay = 0;
+            const staggerTime = 40;
+            let pauseAdded = false;
+
+            allElements.forEach((item, i) => {
+                
+                // Logic: If we hit the first "3", add a big pause
+                if (item.val === 3 && !pauseAdded) {
+                    currentDelay += 1500; // 1.5 second pause
+                    pauseAdded = true;
+                    
+                    // Optional: Update text during pause
+                    setTimeout(() => {
+                        infoText.innerHTML = `Pausing... getting ready for families of 3 members...`;
+                        infoText.style.color = '#ef4444'; // Red text for emphasis
+                    }, currentDelay - 1500);
+
+                    // Reset text after pause
+                    setTimeout(() => {
+                        infoText.innerHTML = `Continuing expansion...`;
+                        infoText.style.color = '#475569';
+                    }, currentDelay);
+                }
+
+                setTimeout(() => {
+                    item.el.classList.add('moving');
+                    item.el.style.opacity = '1';
+                    item.el.style.left = `${item.finalLeft}px`;
+                    item.el.style.top = `${item.finalTop}px`;
+                }, currentDelay);
+
+                currentDelay += staggerTime;
+            });
+
+            // 5. Final Median Reveal
+            const totalTime = currentDelay + 800;
+            setTimeout(() => {
+                infoText.innerHTML = `Visualized <b>${totalMembers}</b> families. Finding median...`;
+                findMedian(medianIndex, totalMembers);
+            }, totalTime);
+        }
+
+        function findMedian(index, total) {
+            const medianObj = allElements[index];
+            allElements.forEach(item => item.el.classList.remove('moving'));
+
+            setTimeout(() => {
+                // Dim others
+                allElements.forEach((item, i) => {
+                    if (i !== index) item.el.classList.add('dimmed');
+                    else item.el.classList.add('median');
+                });
+
+                // Position Annotation
+                const medianRect = medianObj.el.getBoundingClientRect();
+                const stageRect = stage.getBoundingClientRect();
+                
+                const leftPos = (medianRect.left - stageRect.left) + (medianRect.width / 2) - (medianMarker.offsetWidth / 2);
+                const topPos = (medianRect.bottom - stageRect.top) + 8;
+
+                medianTextLbl.textContent = `Median (Position ${index + 1})`;
+                medianMarker.style.left = `${leftPos}px`;
+                medianMarker.style.top = `${topPos}px`;
+                medianMarker.style.opacity = '1';
+
+                infoText.innerHTML = `Total is ${total} (Odd). The median is the <b>${index + 1}${getOrdinal(index+1)}</b> value: <b>${medianObj.val}</b>`;
+                btnReset.disabled = false;
+
+            }, 500);
+        }
+
+        function getOrdinal(n) {
+            const s = ["th", "st", "nd", "rd"];
+            const v = n % 100;
+            return s[(v - 20) % 10] || s[v] || s[0];
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sine Wave Unwrapping Visualization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 30px;
+            color: #333;
+        }
+        h2 { margin-bottom: 10px; }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        #toggleBtn { background-color: #007bff; }
+        #toggleBtn:hover { background-color: #0056b3; }
+        #resetBtn { background-color: #6c757d; }
+        #resetBtn:hover { background-color: #5a6268; }
+        canvas {
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Unit Circle to Sine Wave</h2>
+    <div class="controls">
+        <button id="toggleBtn">Start Animation</button>
+        <button id="resetBtn">Reset</button>
+    </div>
+    
+    <canvas id="trigCanvas" width="950" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('trigCanvas');
+        const ctx = canvas.getContext('2d');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Animation and Math Variables
+        let currentAngle = 0; // In degrees
+        let isPlaying = false;
+        let animationId;
+        const maxAngle = 720;
+        const intervalStep = 10; // 10 degree intervals
+
+        // Layout settings
+        const circle = { x: 150, y: 200, r: 100 };
+        const graph = { x: 350, y: 200, w: 550 }; // Graph takes up 550px for 720 degrees
+
+        function draw() {
+            // 1. Clear Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Draw Equation Text
+            ctx.font = 'bold 22px sans-serif';
+            ctx.fillStyle = '#333';
+            ctx.fillText('sin(x) = y / r', 20, 40);
+
+            // (Unit circle removed) — canvas now focuses on the sine-wave graph
+
+            // 5. Draw Axes for Graph (0 to 720 degrees)
+            ctx.beginPath();
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            ctx.moveTo(graph.x, graph.y);
+            ctx.lineTo(graph.x + graph.w + 20, graph.y); // X-axis
+            ctx.moveTo(graph.x, graph.y - circle.r - 30);
+            ctx.lineTo(graph.x, graph.y + circle.r + 30); // Y-axis
+            ctx.stroke();
+
+            // 6. Add X-Axis Labels (Degrees)
+            ctx.font = '12px sans-serif';
+            ctx.fillStyle = '#666';
+            for (let d = 0; d <= maxAngle; d += 90) {
+                const px = graph.x + (d / maxAngle) * graph.w;
+                ctx.fillText(d + '°', px - 10, graph.y + 20);
+                ctx.beginPath();
+                ctx.moveTo(px, graph.y - 5);
+                ctx.lineTo(px, graph.y + 5);
+                ctx.stroke();
+            }
+
+            // 6.5. Draw the Unit Circle (white)
+            ctx.beginPath();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.arc(circle.x, circle.y, circle.r, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // 7. Plot the Sine Wave at 10-Degree Intervals
+            ctx.beginPath();
+            ctx.strokeStyle = '#007bff';
+            ctx.lineWidth = 2;
+            
+            // Only plot up to the nearest completed 10-degree step
+            let maxPlottedAngle = Math.floor(currentAngle / intervalStep) * intervalStep;
+
+            for (let d = 0; d <= maxPlottedAngle; d += intervalStep) {
+                const rad = d * (Math.PI / 180);
+                // Invert Y because canvas Y goes down
+                const y = circle.y - (Math.sin(rad) * circle.r);
+                const x = graph.x + (d / maxAngle) * graph.w;
+
+                // Draw connecting line
+                if (d === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    const prevRad = (d - intervalStep) * (Math.PI / 180);
+                    const prevY = circle.y - (Math.sin(prevRad) * circle.r);
+                    const prevX = graph.x + ((d - intervalStep) / maxAngle) * graph.w;
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke(); // Stroke the continuous line first
+
+            // Draw individual dots on top
+            for (let d = 0; d <= maxPlottedAngle; d += intervalStep) {
+                const rad = d * (Math.PI / 180);
+                const y = circle.y - (Math.sin(rad) * circle.r);
+                const x = graph.x + (d / maxAngle) * graph.w;
+                
+                ctx.beginPath();
+                ctx.fillStyle = '#dc3545'; // Red dots to match the vertical height
+                ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            // 8. Draw Current Animation State
+            const currentRad = currentAngle * (Math.PI / 180);
+            const currentCircX = circle.x + (Math.cos(currentRad) * circle.r);
+            const currentCircY = circle.y - (Math.sin(currentRad) * circle.r);
+            const currentGraphX = graph.x + (currentAngle / maxAngle) * graph.w;
+
+            // (Circle overlays removed) — only the sine plot and graph indicators remain
+
+            // Draw the active leading dot on the graph
+            ctx.beginPath();
+            ctx.fillStyle = '#007bff';
+            ctx.arc(currentGraphX, currentCircY, 5, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        function animate() {
+            if (isPlaying) {
+                currentAngle += 0.5; // Animation speed: 1 degree per frame
+                
+                if (currentAngle >= maxAngle) {
+                    currentAngle = maxAngle;
+                    isPlaying = false;
+                    toggleBtn.textContent = 'Start Animation';
+                }
+            }
+            
+            draw();
+            animationId = requestAnimationFrame(animate);
+            
+            // Draw a vertical red bar on the graph mirroring the circle's vertical height
+            ctx.beginPath();
+            ctx.strokeStyle = '#dc3545'; // Red for height (same as circle)
+            ctx.lineWidth = 2;
+            ctx.moveTo(currentGraphX, graph.y);
+            ctx.lineTo(currentGraphX, currentCircY);
+            ctx.stroke();
+        }
+
+        // Button Event Listeners
+        toggleBtn.addEventListener('click', () => {
+            if (currentAngle >= maxAngle) {
+                currentAngle = 0; // Auto-restart if at the end
+            }
+            isPlaying = !isPlaying;
+            toggleBtn.textContent = isPlaying ? 'Pause Animation' : 'Start Animation';
+        });
+
+        resetBtn.addEventListener('click', () => {
+            isPlaying = false;
+            currentAngle = 0;
+            toggleBtn.textContent = 'Start Animation';
+            draw();
+        });
+
+        // Initialize
+        draw();
+        animate(); // Start the loop (but isPlaying is false, so it waits)
+    </script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sine & Cosine Wave Visualization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 30px;
+            color: #333;
+        }
+        h2 { margin-bottom: 10px; }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        #toggleBtn { background-color: #007bff; }
+        #toggleBtn:hover { background-color: #0056b3; }
+        #resetBtn { background-color: #6c757d; }
+        #resetBtn:hover { background-color: #5a6268; }
+        canvas {
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Unit Circle to Sine & Cosine Waves</h2>
+    <div class="controls">
+        <button id="toggleBtn">Start Animation</button>
+        <button id="resetBtn">Reset</button>
+    </div>
+    
+    <canvas id="trigCanvas" width="950" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('trigCanvas');
+        const ctx = canvas.getContext('2d');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Animation and Math Variables
+        let currentAngle = 0; // In degrees
+        let isPlaying = false;
+        let animationId;
+        const maxAngle = 720;
+        const intervalStep = 10; // 10 degree intervals
+
+        // Layout settings
+        const circle = { x: 150, y: 200, r: 100 };
+        const graph = { x: 350, y: 200, w: 550 };
+
+        function draw() {
+            // 1. Clear Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Draw Equation Text (Legend)
+            ctx.font = 'bold 20px sans-serif';
+            // Sine Legend
+            ctx.fillStyle = '#007bff';
+            ctx.fillText('sin θ = y / r', 20, 35);
+            ctx.fillStyle = '#dc3545';
+            ctx.fillRect(165, 20, 15, 15); // Red color box for vertical height
+            
+            // Cosine Legend
+            ctx.fillStyle = '#fd7e14';
+            ctx.fillText('cos θ = x / r', 20, 65);
+            ctx.fillStyle = '#6f42c1';
+            ctx.fillRect(165, 50, 15, 15); // Purple color box for horizontal width
+
+            // 3. Draw Axes for Unit Circle
+            ctx.beginPath();
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            ctx.moveTo(circle.x - circle.r - 30, circle.y);
+            ctx.lineTo(circle.x + circle.r + 30, circle.y);
+            ctx.moveTo(circle.x, circle.y - circle.r - 30);
+            ctx.lineTo(circle.x, circle.y + circle.r + 30);
+            ctx.stroke();
+
+            // 4. Draw Unit Circle
+            ctx.beginPath();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.arc(circle.x, circle.y, circle.r, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // 5. Draw Axes for Graph (0 to 720 degrees)
+            ctx.beginPath();
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            ctx.moveTo(graph.x, graph.y);
+            ctx.lineTo(graph.x + graph.w + 20, graph.y); // X-axis
+            ctx.moveTo(graph.x, graph.y - circle.r - 30);
+            ctx.lineTo(graph.x, graph.y + circle.r + 30); // Y-axis
+            ctx.stroke();
+
+            // 6. Add X-Axis Labels (Degrees)
+            ctx.font = '12px sans-serif';
+            ctx.fillStyle = '#666';
+            for (let d = 0; d <= maxAngle; d += 90) {
+                const px = graph.x + (d / maxAngle) * graph.w;
+                ctx.fillText(d + '°', px - 10, graph.y + 20);
+                ctx.beginPath();
+                ctx.moveTo(px, graph.y - 5);
+                ctx.lineTo(px, graph.y + 5);
+                ctx.stroke();
+            }
+
+            let maxPlottedAngle = Math.floor(currentAngle / intervalStep) * intervalStep;
+
+            // 7. Plot the Sine Wave (Blue Line)
+            ctx.beginPath();
+            ctx.strokeStyle = '#007bff';
+            ctx.lineWidth = 2;
+            for (let d = 0; d <= maxPlottedAngle; d += intervalStep) {
+                const rad = d * (Math.PI / 180);
+                const y = circle.y - (Math.sin(rad) * circle.r);
+                const x = graph.x + (d / maxAngle) * graph.w;
+                if (d === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // 8. Plot the Cosine Wave (Orange Line)
+            ctx.beginPath();
+            ctx.strokeStyle = '#fd7e14';
+            ctx.lineWidth = 2;
+            for (let d = 0; d <= maxPlottedAngle; d += intervalStep) {
+                const rad = d * (Math.PI / 180);
+                const y = circle.y - (Math.cos(rad) * circle.r); // Cosine maps to Y-axis on the graph
+                const x = graph.x + (d / maxAngle) * graph.w;
+                if (d === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // 9. Draw Individual Dots for both waves
+            for (let d = 0; d <= maxPlottedAngle; d += intervalStep) {
+                const rad = d * (Math.PI / 180);
+                const x = graph.x + (d / maxAngle) * graph.w;
+                const sinY = circle.y - (Math.sin(rad) * circle.r);
+                const cosY = circle.y - (Math.cos(rad) * circle.r);
+                
+                // Sine Dot (Red)
+                ctx.beginPath();
+                ctx.fillStyle = '#dc3545'; 
+                ctx.arc(x, sinY, 3, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Cosine Dot (Purple)
+                ctx.beginPath();
+                ctx.fillStyle = '#6f42c1'; 
+                ctx.arc(x, cosY, 3, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            // 10. Draw Current Animation State on Unit Circle
+            const currentRad = currentAngle * (Math.PI / 180);
+            const currentCircX = circle.x + (Math.cos(currentRad) * circle.r);
+            const currentCircY = circle.y - (Math.sin(currentRad) * circle.r);
+            const currentGraphX = graph.x + (currentAngle / maxAngle) * graph.w;
+
+            // Draw Radius (r)
+            ctx.beginPath();
+            ctx.strokeStyle = '#28a745'; // Green
+            ctx.lineWidth = 2;
+            ctx.moveTo(circle.x, circle.y);
+            ctx.lineTo(currentCircX, currentCircY);
+            ctx.stroke();
+
+            // Draw Sine Vertical Height (y) - Red
+            ctx.beginPath();
+            ctx.strokeStyle = '#dc3545';
+            ctx.lineWidth = 2.5;
+            ctx.moveTo(currentCircX, circle.y);
+            ctx.lineTo(currentCircX, currentCircY);
+            ctx.stroke();
+
+            // Draw Cosine Horizontal Distance (x) - Purple
+            ctx.beginPath();
+            ctx.strokeStyle = '#6f42c1';
+            ctx.lineWidth = 2.5;
+            ctx.moveTo(circle.x, circle.y);
+            ctx.lineTo(currentCircX, circle.y);
+            ctx.stroke();
+
+            // Projection Line for Sine
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = '#888';
+            ctx.moveTo(currentCircX, currentCircY);
+            ctx.lineTo(currentGraphX, currentCircY);
+            ctx.stroke();
+            ctx.setLineDash([]); 
+
+            // Active leading dots on the graph
+            // Sine Leading Dot
+            ctx.beginPath();
+            ctx.fillStyle = '#007bff';
+            ctx.arc(currentGraphX, currentCircY, 5, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Cosine Leading Dot
+            const currentCosY = circle.y - (Math.cos(currentRad) * circle.r);
+            ctx.beginPath();
+            ctx.fillStyle = '#fd7e14';
+            ctx.arc(currentGraphX, currentCosY, 5, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        function animate() {
+            if (isPlaying) {
+                currentAngle += 0.3; // Slowed down to half speed
+                
+                if (currentAngle >= maxAngle) {
+                    currentAngle = maxAngle;
+                    isPlaying = false;
+                    toggleBtn.textContent = 'Start Animation';
+                }
+            }
+            
+            draw();
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // Button Event Listeners
+        toggleBtn.addEventListener('click', () => {
+            if (currentAngle >= maxAngle) {
+                currentAngle = 0; 
+            }
+            isPlaying = !isPlaying;
+            toggleBtn.textContent = isPlaying ? 'Pause Animation' : 'Start Animation';
+        });
+
+        resetBtn.addEventListener('click', () => {
+            isPlaying = false;
+            currentAngle = 0;
+            toggleBtn.textContent = 'Start Animation';
+            draw();
+        });
+
+        // Initialize
+        draw();
+        animate(); 
+    </script>
+</body>
+</html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Data Mapping Animation</title>
+    <style>
+        :root {
+            --bg-grid: #fcece4;
+            --bg-table-header: #dbece8;
+            --bg-table-row: #f5f5f5;
+            --highlight-color: #ffeb3b;
+            --replace-color: #4caf50;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: var(--text-color);
+        }
+
+        h2 { margin-bottom: 10px; }
+        p { margin-bottom: 20px; color: #666; }
+
+        /* Layout Container */
+        .container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* --- LEFT SIDE: THE DATA GRID --- */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            background-color: var(--bg-grid);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: fit-content;
+        }
+
+        /* The Flip Card Effect */
+        .cell {
+            width: 40px;
+            height: 40px;
+            perspective: 1000px;
+        }
+
+        .cell-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 1.2s;
+            transform-style: preserve-3d;
+            cursor: default;
+        }
+
+        .cell.flipped .cell-inner {
+            transform: rotateY(180deg);
+        }
+
+        .cell-front, .cell-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            border-radius: 4px;
+            font-size: 18px;
+        }
+
+        .cell-front {
+            background-color: white;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        .cell-back {
+            background-color: var(--replace-color);
+            color: white;
+            transform: rotateY(180deg);
+            font-size: 18px;
+            font-weight: bold;
+            border: 1px solid var(--replace-color);
+        }
+
+        /* Highlight state */
+        .cell.highlight .cell-front {
+            background-color: var(--highlight-color);
+            border-color: #fbc02d;
+            transform: scale(1.1);
+            transition: 0.3s;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        /* --- RIGHT SIDE: THE TABLE --- */
+        table {
+            border-collapse: collapse;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 18px;
+        }
+
+        th, td {
+            border: 1px solid #999;
+            padding: 10px 15px;
+            text-align: center;
+        }
+
+        th {
+            background-color: var(--bg-table-header);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) { background-color: #fafafa; }
+        
+        tr.active-row {
+            background-color: #fff9c4 !important;
+            border: 2px solid #fbc02d;
+            transition: background-color 0.3s;
+        }
+
+        /* --- CONTROLS --- */
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover { background-color: #1976D2; }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status-text {
+            font-weight: bold;
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Grouped Data Visualization</h2>
+    <p>Mapping raw data to respective Class Marks</p>
+
+    <div class="container">
+        <div class="grid-container" id="grid"></div>
+
+        <table id="freqTable">
+            <thead>
+                <tr>
+                    <th>Time (min)</th>
+                    <th>Class mark <i>x</i></th>
+                    <th>Frequency <i>f</i></th>
+                    <th><i>xf</i></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr id="row-0">
+                    <td>11-20</td>
+                    <td>15.5</td>
+                    <td>5</td>
+                    <td>77.5</td>
+                </tr>
+                <tr id="row-1">
+                    <td>21-30</td>
+                    <td>25.5</td>
+                    <td>8</td>
+                    <td>204</td>
+                </tr>
+                <tr id="row-2">
+                    <td>31-40</td>
+                    <td>35.5</td>
+                    <td>10</td>
+                    <td>355</td>
+                </tr>
+                <tr id="row-3">
+                    <td>41-50</td>
+                    <td>45.5</td>
+                    <td>7</td>
+                    <td>318.5</td>
+                </tr>
+                <tr id="row-4">
+                    <td>51-60</td>
+                    <td>55.5</td>
+                    <td>7</td>
+                    <td>388.5</td>
+                </tr>
+                <tr id="row-5">
+                    <td>61-70</td>
+                    <td>65.5</td>
+                    <td>3</td>
+                    <td>196.5</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="controls">
+        <button id="animBtn" onclick="runFullAnimation()">Start Full Mapping</button>
+        <button onclick="resetGrid()" style="background-color: #757575;">Reset</button>
+        <div class="status-text" id="status">Ready</div>
+    </div>
+
+    <script>
+        // Raw data
+        const rawData = [
+            11, 14, 15, 16, 19, 21, 21, 23, 25, 25,
+            25, 27, 29, 32, 32, 33, 33, 34, 35, 36,
+            36, 38, 39, 41, 43, 43, 45, 45, 46, 48,
+            52, 53, 55, 55, 59, 60, 60, 61, 65, 66
+        ];
+
+        // Interval Definitions
+        const intervals = [
+            { id: 0, min: 11, max: 20, mark: 15.5 },
+            { id: 1, min: 21, max: 30, mark: 25.5 },
+            { id: 2, min: 31, max: 40, mark: 35.5 },
+            { id: 3, min: 41, max: 50, mark: 45.5 },
+            { id: 4, min: 51, max: 60, mark: 55.5 },
+            { id: 5, min: 61, max: 70, mark: 65.5 }
+        ];
+
+        const gridContainer = document.getElementById('grid');
+        const statusText = document.getElementById('status');
+        let isAnimating = false;
+
+        // Initialize Grid
+        function initGrid() {
+            gridContainer.innerHTML = '';
+            rawData.forEach((num, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `cell-${index}`;
+                cell.dataset.value = num;
+
+                // Determine Class Mark for the "Back" of the card
+                const interval = intervals.find(i => num >= i.min && num <= i.max);
+                const markText = interval ? interval.mark : "?";
+
+                const inner = document.createElement('div');
+                inner.className = 'cell-inner';
+
+                const front = document.createElement('div');
+                front.className = 'cell-front';
+                front.innerText = num;
+
+                const back = document.createElement('div');
+                back.className = 'cell-back';
+                back.innerText = markText;
+
+                inner.appendChild(front);
+                inner.appendChild(back);
+                cell.appendChild(inner);
+                gridContainer.appendChild(cell);
+            });
+        }
+
+        async function runFullAnimation() {
+            if (isAnimating) return;
+            isAnimating = true;
+            document.getElementById('animBtn').disabled = true;
+            resetGrid(); 
+
+            // Loop through all intervals
+            for (let i = 0; i < intervals.length; i++) {
+                const currentInterval = intervals[i];
+                
+                // 1. Highlight Table Row
+                statusText.innerText = `Processing interval ${currentInterval.min}-${currentInterval.max}...`;
+                const currentRow = document.getElementById(`row-${currentInterval.id}`);
+                currentRow.classList.add('active-row');
+
+                await wait(500);
+
+                // 2. Identify numbers in grid
+                const targetIndices = [];
+                rawData.forEach((num, index) => {
+                    if (num >= currentInterval.min && num <= currentInterval.max) {
+                        targetIndices.push(index);
+                    }
+                });
+
+                // 3. Highlight specific cells
+                for (let idx of targetIndices) {
+                    const cell = document.getElementById(`cell-${idx}`);
+                    cell.classList.add('highlight');
+                    await wait(50); // Fast highlight
+                }
+
+                await wait(600);
+
+                // 4. Flip Cells to Class Mark
+                for (let idx of targetIndices) {
+                    const cell = document.getElementById(`cell-${idx}`);
+                    cell.classList.remove('highlight');
+                    cell.classList.add('flipped');
+                    await wait(50); // Fast flip
+                }
+
+                await wait(500);
+
+                // 5. Cleanup Row Style (optional, keeping it clean for next step)
+                currentRow.classList.remove('active-row');
+            }
+
+            statusText.innerText = "All data mapped to class marks!";
+            isAnimating = false;
+            document.getElementById('animBtn').disabled = false;
+        }
+
+        function resetGrid() {
+            if (isAnimating) return;
+            // Remove flips and highlights
+            document.querySelectorAll('.cell').forEach(c => {
+                c.classList.remove('highlight', 'flipped');
+            });
+            // Remove table highlights
+            document.querySelectorAll('tr').forEach(r => {
+                r.classList.remove('active-row');
+            });
+            statusText.innerText = "Ready";
+        }
+
+        function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        initGrid();
+
+    </script>
+</body>
+</html>

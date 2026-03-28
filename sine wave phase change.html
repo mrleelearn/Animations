@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sine Wave Phase Change</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ccc;
+            background: white;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        input[type="number"] {
+            padding: 8px;
+            font-size: 16px;
+            width: 100px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .equation {
+            font-size: 18px;
+            margin: 10px 0;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 5px;
+        }
+        .legend {
+            margin: 10px 0;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .legend-line {
+            width: 30px;
+            height: 3px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sine Wave Phase Change</h1>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-line" style="background: black;"></div>
+                <span>y = sin(x)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-line" style="background: red; border-bottom: 3px dotted red;"></div>
+                <span id="phaseEquation">Phase changed curve</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <label for="phaseInput">Phase shift (degrees):</label>
+            <input type="number" id="phaseInput" value="0" step="1">
+            <button onclick="drawWaves()">Show</button>
+        </div>
+
+        <div class="equation" id="equationDisplay">
+            New equation: y = sin(x)
+        </div>
+
+        <canvas id="waveCanvas" width="800" height="400"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        const phaseInput = document.getElementById('phaseInput');
+        const equationDisplay = document.getElementById('equationDisplay');
+        const phaseEquation = document.getElementById('phaseEquation');
+
+        function drawWaves() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Get phase shift in degrees
+            const phaseDegrees = parseFloat(phaseInput.value) || 0;
+            const phaseRadians = phaseDegrees * Math.PI / 180;
+            
+            // Draw axes
+            drawAxes();
+            
+            // Draw original sine wave (black)
+            drawSineWave(0, 'black', 2, 'solid');
+            
+            // Draw phase-shifted sine wave (red, thick dotted)
+            drawSineWave(phaseRadians, 'red', 4, 'dotted');
+            
+            // Update equation display
+            const sign = phaseDegrees >= 0 ? '+' : '';
+            equationDisplay.innerHTML = `New equation: y = sin(x ${sign}${phaseDegrees}°)`;
+            phaseEquation.textContent = `y = sin(x ${sign}${phaseDegrees}°)`;
+        }
+
+        function drawAxes() {
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1;
+            
+            // X-axis
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            
+            // Y-axis
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            
+            // Labels
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Arial';
+            ctx.fillText('0', canvas.width / 2 - 10, canvas.height / 2 + 20);
+            ctx.fillText('360°', canvas.width - 30, canvas.height / 2 + 20);
+            ctx.fillText('1', canvas.width / 2 + 10, canvas.height / 2 - 100);
+            ctx.fillText('-1', canvas.width / 2 + 10, canvas.height / 2 + 100);
+        }
+
+        function drawSineWave(phase, color, lineWidth, lineStyle) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            
+            if (lineStyle === 'dotted') {
+                ctx.setLineDash([5, 5]);
+            } else {
+                ctx.setLineDash([]);
+            }
+            
+            ctx.beginPath();
+            
+            const amplitude = 100;
+            const centerY = canvas.height / 2;
+            const centerX = canvas.width / 2;
+            const scaleX = canvas.width / 720;
+            
+            for (let x = 0; x < canvas.width; x++) {
+                const xRad = (x - centerX) / scaleX;
+                const y = Math.sin((xRad * Math.PI / 180) + phase) * amplitude;
+                
+                if (x === 0) {
+                    ctx.moveTo(x, centerY - y);
+                } else {
+                    ctx.lineTo(x, centerY - y);
+                }
+            }
+            
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Draw initial waves on page load
+        drawWaves();
+    </script>
+</body>
+</html>
