@@ -224,7 +224,7 @@
     </div>
 
     <div class="controls">
-        <button id="animBtn" onclick="runFullAnimation()">Start Full Mapping</button>
+        <button id="animBtn" onclick="nextRow()">Start Animation</button>
         <button onclick="resetGrid()" style="background-color: #757575;">Reset</button>
         <div class="status-text" id="status">Ready</div>
     </div>
@@ -251,6 +251,7 @@
         const gridContainer = document.getElementById('grid');
         const statusText = document.getElementById('status');
         let isAnimating = false;
+        let currentRowIndex = 0;
 
         // Initialize Grid
         function initGrid() {
@@ -283,57 +284,67 @@
             });
         }
 
-        async function runFullAnimation() {
+        async function animateSingleRow(rowIndex) {
             if (isAnimating) return;
             isAnimating = true;
             document.getElementById('animBtn').disabled = true;
-            resetGrid(); 
 
-            // Loop through all intervals
-            for (let i = 0; i < intervals.length; i++) {
-                const currentInterval = intervals[i];
-                
-                // 1. Highlight Table Row
-                statusText.innerText = `Processing interval ${currentInterval.min}-${currentInterval.max}...`;
-                const currentRow = document.getElementById(`row-${currentInterval.id}`);
-                currentRow.classList.add('active-row');
+            const currentInterval = intervals[rowIndex];
+            
+            // 1. Highlight Table Row
+            statusText.innerText = `Processing interval ${currentInterval.min}-${currentInterval.max}...`;
+            const currentRow = document.getElementById(`row-${currentInterval.id}`);
+            currentRow.classList.add('active-row');
 
-                await wait(500);
+            await wait(500);
 
-                // 2. Identify numbers in grid
-                const targetIndices = [];
-                rawData.forEach((num, index) => {
-                    if (num >= currentInterval.min && num <= currentInterval.max) {
-                        targetIndices.push(index);
-                    }
-                });
-
-                // 3. Highlight specific cells
-                for (let idx of targetIndices) {
-                    const cell = document.getElementById(`cell-${idx}`);
-                    cell.classList.add('highlight');
-                    await wait(50); // Fast highlight
+            // 2. Identify numbers in grid
+            const targetIndices = [];
+            rawData.forEach((num, index) => {
+                if (num >= currentInterval.min && num <= currentInterval.max) {
+                    targetIndices.push(index);
                 }
+            });
 
-                await wait(600);
-
-                // 4. Flip Cells to Class Mark
-                for (let idx of targetIndices) {
-                    const cell = document.getElementById(`cell-${idx}`);
-                    cell.classList.remove('highlight');
-                    cell.classList.add('flipped');
-                    await wait(50); // Fast flip
-                }
-
-                await wait(500);
-
-                // 5. Cleanup Row Style (optional, keeping it clean for next step)
-                currentRow.classList.remove('active-row');
+            // 3. Highlight specific cells
+            for (let idx of targetIndices) {
+                const cell = document.getElementById(`cell-${idx}`);
+                cell.classList.add('highlight');
+                await wait(50);
             }
 
-            statusText.innerText = "All data mapped to class marks!";
+            await wait(600);
+
+            // 4. Flip Cells to Class Mark
+            for (let idx of targetIndices) {
+                const cell = document.getElementById(`cell-${idx}`);
+                cell.classList.remove('highlight');
+                cell.classList.add('flipped');
+                await wait(50);
+            }
+
+            await wait(500);
+
+            // 5. Cleanup Row Style
+            currentRow.classList.remove('active-row');
+
+            // Prepare for next row
+            currentRowIndex++;
             isAnimating = false;
-            document.getElementById('animBtn').disabled = false;
+
+            // Enable button or show completion
+            if (currentRowIndex < intervals.length) {
+                statusText.innerText = `Row ${currentRowIndex} done. Click "Next Row" for row ${currentRowIndex + 1}`;
+                document.getElementById('animBtn').disabled = false;
+            } else {
+                statusText.innerText = "All data mapped to class marks! Animation complete.";
+                document.getElementById('animBtn').disabled = true;
+            }
+        }
+
+        function nextRow() {
+            if (currentRowIndex >= intervals.length) return;
+            animateSingleRow(currentRowIndex);
         }
 
         function resetGrid() {
@@ -347,6 +358,8 @@
                 r.classList.remove('active-row');
             });
             statusText.innerText = "Ready";
+            currentRowIndex = 0;
+            document.getElementById('animBtn').disabled = false;
         }
 
         function wait(ms) {
