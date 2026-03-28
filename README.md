@@ -6,7 +6,6 @@ Click on any animation below to view it:
 - [Sine Wave (no circle)](sine_wave%20no%20circle.html)
 
 ## Cosine Wave Animations
-- [Cosine Wave](cosine_wave.html)
 - [Cosine Wave (no circle)](cosine_wave%20no%20circle.html)
 
 ## Combined Animations
