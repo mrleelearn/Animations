@@ -3,14 +3,12 @@ Click on any animation below to view it:
 
 ## Sine Wave Animations
 - [Sine Wave](sine_wave.html)
-- [Sine Wave (no circle)](sine_wave%20no%20circle.html)
 
 ## Cosine Wave Animations
-- [Cosine Wave (no circle)](cosine_wave%20no%20circle.html)
+- [Cosine Wave](cosine_wave%20no%20circle.html)
 
 ## Combined Animations
-- [Sine & Cosine Wave](sine_cosine_wave.html)
-- [Sine & Cosine Wave (no circle)](sine_cosine_wave%20no%20circle.html)
+- [Sine & Cosine Wave Combined](sine_cosine_wave%20no%20circle.html)
 
 ## Phase Change
 - [Sine Wave Phase Change](sine%20wave%20phase%20change.html)
