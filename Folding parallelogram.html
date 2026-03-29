@@ -9,16 +9,23 @@
         #canvas-container { width: 100vw; height: 100vh; }
         #ui-panel {
             position: absolute; top: 20px; left: 20px;
-            background: rgba(0, 0, 0, 0.7); padding: 15px;
-            border-radius: 8px; border: 1px solid #444;
-            z-index: 10;
+            background: rgba(0, 0, 0, 0.8); padding: 20px;
+            border-radius: 12px; border: 1px solid #555;
+            z-index: 10; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        .control-group { margin-bottom: 10px; }
-        label { cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .control-group { margin-bottom: 12px; }
+        label { cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.9em; }
         #angle-display {
-            margin-top: 15px; font-weight: bold; font-size: 1.2em; color: #ffeb3b;
+            margin: 15px 0; font-weight: bold; font-size: 1.1em; color: #ffeb3b;
+            border-top: 1px solid #444; padding-top: 10px;
         }
-        .instructions { font-size: 0.85em; color: #aaa; margin-top: 10px; max-width: 250px; }
+        button {
+            width: 100%; padding: 8px; border-radius: 5px; border: none;
+            background: #2196F3; color: white; font-weight: bold;
+            cursor: pointer; transition: background 0.2s;
+        }
+        button:hover { background: #1976D2; }
+        .instructions { font-size: 0.8em; color: #bbb; margin-top: 15px; line-height: 1.4; }
     </style>
     <script type="importmap">
         {
@@ -33,21 +40,20 @@
 
     <div id="ui-panel">
         <div class="control-group">
-            <label>
-                <input type="checkbox" id="show-lines-cb" checked>
-                Show Perpendicular Lines
-            </label>
+            <label><input type="checkbox" id="show-lines-cb" checked> Show Perpendiculars</label>
         </div>
         <div class="control-group">
-            <label>
-                <input type="checkbox" id="show-angle-cb" checked>
-                Show Angle Arc
-            </label>
+            <label><input type="checkbox" id="show-angle-cb" checked> Show Angle Arc</label>
         </div>
+        
         <div id="angle-display">Angle between planes: 60.0°</div>
+        
+        <button id="reset-btn">Reset to Flat (180°)</button>
+
         <div class="instructions">
-            - Drag the yellow sphere to fold the plane.<br>
-            - Click & drag background to rotate view.
+            • <b>Drag Sphere:</b> Fold plane<br>
+            • <b>Drag Background:</b> Rotate view<br>
+            • <b>Snaps to:</b> 0°, 90°, 180°
         </div>
     </div>
 
@@ -57,57 +63,44 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // --- Setup Scene ---
-        const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        
-        // Perspective adjusted to "open to the viewer" (lower Y, closer Z)
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 4, 18);
+        camera.position.set(0, 5, 16); // Open perspective
         
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        container.appendChild(renderer.domElement);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.target.set(0, 0, 0);
 
-        // Lights
         scene.add(new THREE.AmbientLight(0xffffff, 0.7));
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
         dirLight.position.set(5, 10, 7);
         scene.add(dirLight);
 
-        // --- Geometry Data ---
+        // --- Geometry ---
         const A = new THREE.Vector3(-5, 0, 0);
         const C = new THREE.Vector3(5, 0, 0);
         const B = new THREE.Vector3(-2, 0, -4); 
-        
         let radiusD = 4; 
-        // Modified: Start at 120 deg in coord space so dihedral (diff from 180) is 60
-        let currentAngle = Math.PI - (Math.PI / 3); 
-        const D = new THREE.Vector3(2, 0, radiusD);
+        let currentAngle = Math.PI - (Math.PI / 3); // Start at 60 deg dihedral
 
-        // --- Visual Elements ---
-        const matABC = new THREE.MeshLambertMaterial({ color: 0x2196F3, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+        const matABC = new THREE.MeshLambertMaterial({ color: 0x2196F3, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
         const geomABC = new THREE.BufferGeometry().setFromPoints([A, B, C]);
         geomABC.computeVertexNormals();
         scene.add(new THREE.Mesh(geomABC, matABC));
 
-        const matADC = new THREE.MeshLambertMaterial({ color: 0x4CAF50, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+        const matADC = new THREE.MeshLambertMaterial({ color: 0x4CAF50, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
         const geomADC = new THREE.BufferGeometry();
         const meshADC = new THREE.Mesh(geomADC, matADC);
         scene.add(meshADC);
 
-        const axisMat = new THREE.LineBasicMaterial({ color: 0xffffff });
-        const axisLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([A, C]), axisMat);
+        const axisLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([A, C]), new THREE.LineBasicMaterial({ color: 0xffffff }));
         scene.add(axisLine);
 
-        const perpMat1 = new THREE.LineBasicMaterial({ color: 0xff5722, depthTest: false }); 
-        const perpMat2 = new THREE.LineBasicMaterial({ color: 0xffeb3b, depthTest: false }); 
-        const perpLine1 = new THREE.Line(new THREE.BufferGeometry(), perpMat1);
-        const perpLine2 = new THREE.Line(new THREE.BufferGeometry(), perpMat2);
+        const perpLine1 = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xff5722, depthTest: false }));
+        const perpLine2 = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffeb3b, depthTest: false }));
         perpLine1.renderOrder = 1; perpLine2.renderOrder = 1;
         scene.add(perpLine1, perpLine2);
 
@@ -119,53 +112,38 @@
         scene.add(handle);
 
         function updateGeometry() {
-            D.set(2, radiusD * Math.sin(currentAngle), radiusD * Math.cos(currentAngle));
+            const D = new THREE.Vector3(2, radiusD * Math.sin(currentAngle), radiusD * Math.cos(currentAngle));
             handle.position.copy(D);
-
             geomADC.setFromPoints([A, D, C]);
             geomADC.computeVertexNormals();
 
-            const maxPerpDist = (5/7) * radiusD;
-            const origin = new THREE.Vector3(0, 0, 0);
-            
-            const p1End = new THREE.Vector3(0, 0, -maxPerpDist);
-            const p2Dir = new THREE.Vector3(0, Math.sin(currentAngle), Math.cos(currentAngle));
-            const p2End = p2Dir.multiplyScalar(maxPerpDist);
-
-            perpLine1.geometry.setFromPoints([origin, p1End]);
-            perpLine2.geometry.setFromPoints([origin, p2End]);
+            const maxDist = (5/7) * radiusD;
+            perpLine1.geometry.setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0, 0, -maxDist)]);
+            perpLine2.geometry.setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0, Math.sin(currentAngle)*maxDist, Math.cos(currentAngle)*maxDist)]);
 
             const arcPoints = [];
-            const segments = 32;
-            const arcRadius = 1.8;
-            const startAngle = Math.PI;
-            const endAngle = currentAngle;
-            
-            for (let i = 0; i <= segments; i++) {
-                const t = i / segments;
-                const a = startAngle + (endAngle - startAngle) * t;
-                arcPoints.push(new THREE.Vector3(0, arcRadius * Math.sin(a), arcRadius * Math.cos(a)));
+            const start = Math.PI, end = currentAngle;
+            for (let i = 0; i <= 32; i++) {
+                const a = start + (end - start) * (i/32);
+                arcPoints.push(new THREE.Vector3(0, 1.8 * Math.sin(a), 1.8 * Math.cos(a)));
             }
             arcLine.geometry.setFromPoints(arcPoints);
 
-            const angleBetweenPlanes = Math.abs(currentAngle - Math.PI) * (180 / Math.PI);
-            document.getElementById('angle-display').innerText = `Angle between planes: ${angleBetweenPlanes.toFixed(1)}°`;
+            const deg = Math.abs(currentAngle - Math.PI) * (180 / Math.PI);
+            document.getElementById('angle-display').innerText = `Angle between planes: ${deg.toFixed(1)}°`;
         }
 
-        // --- Interaction ---
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
+        // --- Snapping & Interaction ---
         let isDragging = false;
         const dragPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), -2);
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
 
         window.addEventListener('mousedown', (e) => {
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
-            if (raycaster.intersectObject(handle).length > 0) {
-                isDragging = true;
-                controls.enabled = false;
-            }
+            if (raycaster.intersectObject(handle).length > 0) { isDragging = true; controls.enabled = false; }
         });
 
         window.addEventListener('mousemove', (e) => {
@@ -173,25 +151,34 @@
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
-            const intersection = new THREE.Vector3();
-            if (raycaster.ray.intersectPlane(dragPlane, intersection)) {
-                currentAngle = Math.atan2(intersection.y, intersection.z);
+            const intersect = new THREE.Vector3();
+            if (raycaster.ray.intersectPlane(dragPlane, intersect)) {
+                let angle = Math.atan2(intersect.y, intersect.z);
+                let deg = angle * (180/Math.PI);
+                if (deg < 0) deg += 360;
+
+                // Snapping Logic
+                const threshold = 6;
+                if (Math.abs(deg - 180) < threshold) angle = Math.PI;
+                else if (Math.abs(deg - 90) < threshold) angle = Math.PI / 2;
+                else if (Math.abs(deg - 270) < threshold) angle = (3 * Math.PI) / 2;
+                else if (deg < threshold || deg > 360 - threshold) angle = 0;
+
+                currentAngle = angle;
                 updateGeometry();
             }
         });
 
-        window.addEventListener('mouseup', () => {
-            isDragging = false;
-            controls.enabled = true;
-        });
+        window.addEventListener('mouseup', () => { isDragging = false; controls.enabled = true; });
 
-        document.getElementById('show-lines-cb').addEventListener('change', (e) => {
-            perpLine1.visible = perpLine2.visible = e.target.checked;
-        });
+        // --- UI Events ---
+        document.getElementById('reset-btn').onclick = () => {
+            currentAngle = Math.PI;
+            updateGeometry();
+        };
 
-        document.getElementById('show-angle-cb').addEventListener('change', (e) => {
-            arcLine.visible = e.target.checked;
-        });
+        document.getElementById('show-lines-cb').onchange = (e) => perpLine1.visible = perpLine2.visible = e.target.checked;
+        document.getElementById('show-angle-cb').onchange = (e) => arcLine.visible = e.target.checked;
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -200,11 +187,7 @@
         });
 
         updateGeometry();
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        }
+        function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
         animate();
     </script>
 </body>
