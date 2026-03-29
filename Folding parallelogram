@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Parallelogram Dihedral Angle</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1e1e1e; font-family: sans-serif; color: white; }
+        #canvas-container { width: 100vw; height: 100vh; }
+        #ui-panel {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(0, 0, 0, 0.7); padding: 15px;
+            border-radius: 8px; border: 1px solid #444;
+        }
+        .control-group { margin-bottom: 10px; }
+        label { cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        #angle-display {
+            margin-top: 15px; font-weight: bold; font-size: 1.2em; color: #ffeb3b;
+        }
+        .instructions { font-size: 0.85em; color: #aaa; margin-top: 10px; max-width: 250px; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="show-lines-cb" checked>
+                Show Perpendicular Lines
+            </label>
+        </div>
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="show-angle-cb" checked>
+                Show Angle Arc
+            </label>
+        </div>
+        <div id="angle-display">Angle: 180°</div>
+        <div class="instructions">
+            - Drag the yellow sphere to fold the plane.<br>
+            - Click & drag the background to rotate the camera.
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- Setup Scene ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(10, 8, 15);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 10, 5);
+        scene.add(dirLight);
+
+        // --- Geometry Data ---
+        // Parallelogram ABCD
+        // Axis of rotation will be the diagonal AC, placed along the X-axis for simplicity.
+        const A = new THREE.Vector3(-5, 0, 0);
+        const C = new THREE.Vector3(5, 0, 0);
+        const B = new THREE.Vector3(-2, 0, -4); 
+        
+        // Initial D (flat parallelogram)
+        let radiusD = 4; // Distance from X-axis
+        let currentAngle = Math.PI; // 180 degrees (flat)
+        const D = new THREE.Vector3(2, 0, radiusD);
+
+        // --- Visual Elements ---
+
+        // 1. Fixed Triangle (ABC)
+        const matABC = new THREE.MeshLambertMaterial({ color: 0x2196F3, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+        const geomABC = new THREE.BufferGeometry().setFromPoints([A, B, C]);
+        geomABC.computeVertexNormals();
+        const meshABC = new THREE.Mesh(geomABC, matABC);
+        scene.add(meshABC);
+
+        // 2. Moving Triangle (ADC)
+        const matADC = new THREE.MeshLambertMaterial({ color: 0x4CAF50, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+        const geomADC = new THREE.BufferGeometry();
+        const meshADC = new THREE.Mesh(geomADC, matADC);
+        scene.add(meshADC);
+
+        // 3. Axis of Rotation (AC)
+        const axisMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+        const axisGeom = new THREE.BufferGeometry().setFromPoints([A, C]);
+        const axisLine = new THREE.Line(axisGeom, axisMat);
+        scene.add(axisLine);
+
+        // 4. Perpendicular Lines
+        const perpMat1 = new THREE.LineBasicMaterial({ color: 0xff5722, depthTest: false }); // Plane 1
+        const perpMat2 = new THREE.LineBasicMaterial({ color: 0xffeb3b, depthTest: false }); // Plane 2
+        
+        const origin = new THREE.Vector3(0, 0, 0); // Point on the axis
+        const perpLine1 = new THREE.Line(new THREE.BufferGeometry(), perpMat1);
+        const perpLine2 = new THREE.Line(new THREE.BufferGeometry(), perpMat2);
+        perpLine1.renderOrder = 1;
+        perpLine2.renderOrder = 1;
+        scene.add(perpLine1);
+        scene.add(perpLine2);
+
+        // 5. Angle Arc
+        const arcMat = new THREE.LineBasicMaterial({ color: 0xffffff, depthTest: false });
+        const arcLine = new THREE.Line(new THREE.BufferGeometry(), arcMat);
+        arcLine.renderOrder = 2;
+        scene.add(arcLine);
+
+        // 6. Interactive Handle (Vertex D)
+        const handleGeom = new THREE.SphereGeometry(0.4, 16, 16);
+        const handleMat = new THREE.MeshBasicMaterial({ color: 0xffeb3b });
+        const handle = new THREE.Mesh(handleGeom, handleMat);
+        scene.add(handle);
+
+        // --- Update Function ---
+        function updateGeometry() {
+            // Update D's position based on angle
+            D.set(2, radiusD * Math.sin(currentAngle), radiusD * Math.cos(currentAngle));
+            handle.position.copy(D);
+
+            // Update moving triangle
+            geomADC.setFromPoints([A, D, C]);
+            geomADC.computeVertexNormals();
+
+            // Calculate perpendiculars from origin (0,0,0) on the X-axis
+            // Plane 1 perpendicular: goes towards -Z
+            const p1End = new THREE.Vector3(0, 0, -radiusD);
+            // Plane 2 perpendicular: goes towards rotated D
+            const p2End = new THREE.Vector3(0, radiusD * Math.sin(currentAngle), radiusD * Math.cos(currentAngle));
+
+            perpLine1.geometry.setFromPoints([origin, p1End]);
+            perpLine2.geometry.setFromPoints([origin, p2End]);
+
+            // Create Arc
+            const arcPoints = [];
+            const segments = 32;
+            const arcRadius = 1.5;
+            
+            // The angle goes from Pi (flat) to whatever currentAngle is.
+            // But to draw the arc properly between the two perpendiculars:
+            // P1 is at angle PI. P2 is at currentAngle.
+            const startAngle = Math.PI;
+            const endAngle = currentAngle;
+            
+            for (let i = 0; i <= segments; i++) {
+                const t = i / segments;
+                const a = startAngle + (endAngle - startAngle) * t;
+                arcPoints.push(new THREE.Vector3(0, arcRadius * Math.sin(a), arcRadius * Math.cos(a)));
+            }
+            arcLine.geometry.setFromPoints(arcPoints);
+
+            // Update Text
+            let displayAngle = (currentAngle * 180 / Math.PI) - 180;
+            if (displayAngle < 0) displayAngle += 360; // Keep it clean visually
+            if (currentAngle === Math.PI) displayAngle = 180; // Handle exact flat case beautifully
+
+            // Absolute difference from flat plane
+            const dihedralAngle = Math.abs(180 - displayAngle);
+            document.getElementById('angle-display').innerText = `Dihedral Angle: ${dihedralAngle.toFixed(1)}°`;
+        }
+
+        // --- Interaction Logic ---
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let isDragging = false;
+
+        // An invisible mathematical plane perpendicular to X-axis at x=2 for mouse intersection
+        const dragPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), -2);
+
+        window.addEventListener('mousedown', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObject(handle);
+            if (intersects.length > 0) {
+                isDragging = true;
+                controls.enabled = false; // Disable camera orbit while dragging
+            }
+        });
+
+        window.addEventListener('mousemove', (event) => {
+            if (!isDragging) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersection = new THREE.Vector3();
+            raycaster.ray.intersectPlane(dragPlane, intersection);
+
+            if (intersection) {
+                // Calculate angle from the center of rotation (x=2, y=0, z=0)
+                currentAngle = Math.atan2(intersection.y, intersection.z);
+                updateGeometry();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            controls.enabled = true;
+        });
+
+        // --- UI Listeners ---
+        document.getElementById('show-lines-cb').addEventListener('change', (e) => {
+            perpLine1.visible = e.target.checked;
+            perpLine2.visible = e.target.checked;
+        });
+
+        document.getElementById('show-angle-cb').addEventListener('change', (e) => {
+            arcLine.visible = e.target.checked;
+        });
+
+        // Window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- Main Loop ---
+        updateGeometry();
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
