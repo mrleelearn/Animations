@@ -18,5 +18,5 @@ Click on any animation below to view it:
 
 ## Data Animations
 - [Ungrouped to Grouped Data Animation](ungrouped%20to%20grouped%20data%20animation.htm)
-- [Median Ungrouped Data (Example 10.8)](Median%20ungrouped%20data%20unfolded%20example%2010.8.html)
-- [Median Ungrouped Data (CW10_8)](Median%20ungrouped%20data%20unfolded%20CW10_8.html)
+- [Median Ungrouped Data (Example 10.8)](median%20ungrouped%20data%20unfolded%20example%2010.8.html)
+- [Median Ungrouped Data (CW10_8)](median%20ungrouped%20data%20unfolded%20cw10_8.html)
