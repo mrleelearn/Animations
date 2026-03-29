@@ -3,29 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Parallelogram - Touch Enabled</title>
+    <title>3D Parallelogram - Compatibility Fix</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #3d1a52; font-family: sans-serif; color: white; touch-action: none; }
         #canvas-container { width: 100vw; height: 100vh; }
         #ui-panel {
             position: absolute; top: 10px; left: 10px;
-            background: rgba(0, 0, 0, 0.85); padding: 15px;
+            background: rgba(0, 0, 0, 0.9); padding: 15px;
             border-radius: 12px; border: 1px solid #555;
-            z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            max-width: 220px;
+            z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-width: 220px; pointer-events: auto;
         }
-        .control-group { margin-bottom: 10px; }
+        .control-group { margin-bottom: 12px; }
         label { cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.9em; }
         #angle-display {
-            margin: 10px 0; font-weight: bold; font-size: 1em; color: #ffeb3b;
-            border-top: 1px solid #444; padding-top: 8px;
+            margin: 10px 0; font-weight: bold; font-size: 1.1em; color: #ffeb3b;
+            border-top: 1px solid #444; padding-top: 10px;
         }
+        /* --- Line 26: Fixed with standard appearance property --- */
         button {
-            width: 100%; padding: 10px; border-radius: 5px; border: none;
+            width: 100%; padding: 14px; border-radius: 8px; border: none;
             background: #2196F3; color: white; font-weight: bold;
-            cursor: pointer; transition: background 0.2s; -webkit-appearance: none;
+            cursor: pointer; font-size: 14px; transition: all 0.2s;
+            -webkit-appearance: none; 
+            appearance: none; 
+            touch-action: manipulation;
+            text-transform: uppercase;
         }
-        button:active { background: #1565C0; }
+        button:active { background: #0D47A1; transform: scale(0.95); }
         .instructions { font-size: 0.75em; color: #bbb; margin-top: 10px; line-height: 1.3; }
     </style>
     <script type="importmap">
@@ -46,15 +51,11 @@
         <div class="control-group">
             <label><input type="checkbox" id="show-angle-cb" checked> Show Angle Arc</label>
         </div>
-        
-        <div id="angle-display">Angle between planes: 60.0°</div>
-        
-        <button id="reset-btn">Reset to Flat (180°)</button>
-
+        <div id="angle-display">Angle: 0.0°</div>
+        <button id="reset-btn">Reset to Flat</button>
         <div class="instructions">
             • <b>Drag Yellow Dot:</b> Fold plane<br>
-            • <b>Drag Background:</b> Rotate view<br>
-            • <b>Touch/Tablet Friendly</b>
+            • <b>Background:</b> Rotate view
         </div>
     </div>
 
@@ -76,17 +77,18 @@
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
         dirLight.position.set(5, 10, 7);
         scene.add(dirLight);
 
-        // --- Geometry ---
+        // --- Data ---
         const A = new THREE.Vector3(-5, 0, 0);
         const C = new THREE.Vector3(5, 0, 0);
         const B = new THREE.Vector3(-2, 0, -4); 
         let radiusD = 4; 
-        let currentAngle = Math.PI - (Math.PI / 3); 
+        let currentAngle = Math.PI; // 180 (Flat)
+        let isResetting = false;
 
         const geomABC = new THREE.BufferGeometry().setFromPoints([A, B, C]);
         geomABC.computeVertexNormals();
@@ -107,15 +109,11 @@
         arcLine.renderOrder = 2;
         scene.add(arcLine);
 
-        const handle = new THREE.Mesh(new THREE.SphereGeometry(0.35, 24, 24), new THREE.MeshBasicMaterial({ color: 0xffeb3b }));
+        const handle = new THREE.Mesh(new THREE.SphereGeometry(0.4, 24, 24), new THREE.MeshBasicMaterial({ color: 0xffeb3b }));
         scene.add(handle);
 
         function updateGeometry() {
-            const Dx = 2;
-            const Dy = radiusD * Math.sin(currentAngle);
-            const Dz = radiusD * Math.cos(currentAngle);
-            const D = new THREE.Vector3(Dx, Dy, Dz);
-            
+            const D = new THREE.Vector3(2, radiusD * Math.sin(currentAngle), radiusD * Math.cos(currentAngle));
             handle.position.copy(D);
             geomADC.setFromPoints([A, D, C]);
             geomADC.computeVertexNormals();
@@ -128,81 +126,78 @@
             const start = Math.PI, end = currentAngle;
             for (let i = 0; i <= 32; i++) {
                 const a = start + (end - start) * (i/32);
-                arcPoints.push(new THREE.Vector3(0, 1.8 * Math.sin(a), 1.8 * Math.cos(a)));
+                arcPoints.push(new THREE.Vector3(0, 2 * Math.sin(a), 2 * Math.cos(a)));
             }
             arcLine.geometry.setFromPoints(arcPoints);
 
-            const deg = Math.abs(currentAngle - Math.PI) * (180 / Math.PI);
-            document.getElementById('angle-display').innerText = `Angle between planes: ${deg.toFixed(1)}°`;
+            // Display: PI is 0 deg (flat), 0 is 180 deg (folded)
+            let displayDeg = Math.abs(currentAngle - Math.PI) * (180 / Math.PI);
+            document.getElementById('angle-display').innerText = `Angle: ${displayDeg.toFixed(1)}°`;
         }
 
-        // --- Universal Interaction (Mouse & Touch) ---
+        // --- Universal Interaction ---
         let isDragging = false;
         const dragPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), -2);
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2();
 
-        function onPointerDown(e) {
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            
-            pointer.x = (clientX / window.innerWidth) * 2 - 1;
-            pointer.y = -(clientY / window.innerHeight) * 2 + 1;
+        function handleDown(e) {
+            if (isResetting) return;
+            const x = e.touches ? e.touches[0].clientX : e.clientX;
+            const y = e.touches ? e.touches[0].clientY : e.clientY;
+            pointer.x = (x / window.innerWidth) * 2 - 1;
+            pointer.y = -(y / window.innerHeight) * 2 + 1;
             
             raycaster.setFromCamera(pointer, camera);
-            const intersects = raycaster.intersectObject(handle);
-            if (intersects.length > 0) {
+            if (raycaster.intersectObject(handle).length > 0) {
                 isDragging = true;
                 controls.enabled = false;
             }
         }
 
-        function onPointerMove(e) {
-            if (!isDragging) return;
-            e.preventDefault(); // Prevents scrolling while dragging
-
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        function handleMove(e) {
+            if (!isDragging || isResetting) return;
+            if(e.cancelable) e.preventDefault();
             
-            pointer.x = (clientX / window.innerWidth) * 2 - 1;
-            pointer.y = -(clientY / window.innerHeight) * 2 + 1;
+            const x = e.touches ? e.touches[0].clientX : e.clientX;
+            const y = e.touches ? e.touches[0].clientY : e.clientY;
+            pointer.x = (x / window.innerWidth) * 2 - 1;
+            pointer.y = -(y / window.innerHeight) * 2 + 1;
             
             raycaster.setFromCamera(pointer, camera);
-            const intersectPoint = new THREE.Vector3();
-            if (raycaster.ray.intersectPlane(dragPlane, intersectPoint)) {
-                let angle = Math.atan2(intersectPoint.y, intersectPoint.z);
+            const intersect = new THREE.Vector3();
+            if (raycaster.ray.intersectPlane(dragPlane, intersect)) {
+                let angle = Math.atan2(intersect.y, intersect.z);
                 let deg = angle * (180/Math.PI);
                 if (deg < 0) deg += 360;
 
-                const threshold = 6;
-                if (Math.abs(deg - 180) < threshold) angle = Math.PI;
-                else if (Math.abs(deg - 90) < threshold) angle = Math.PI / 2;
-                else if (Math.abs(deg - 270) < threshold) angle = (3 * Math.PI) / 2;
-                else if (deg < threshold || deg > 360 - threshold) angle = 0;
+                const snap = 8;
+                if (Math.abs(deg - 180) < snap) angle = Math.PI;
+                else if (Math.abs(deg - 90) < snap) angle = Math.PI / 2;
+                else if (Math.abs(deg - 270) < snap) angle = (3 * Math.PI) / 2;
+                else if (deg < snap || deg > 360 - snap) angle = 0;
 
                 currentAngle = angle;
                 updateGeometry();
             }
         }
 
-        function onPointerUp() {
-            isDragging = false;
-            controls.enabled = true;
-        }
+        function handleUp() { isDragging = false; controls.enabled = true; }
 
-        // Listeners for both Mouse and Touch
-        window.addEventListener('mousedown', onPointerDown);
-        window.addEventListener('mousemove', onPointerMove);
-        window.addEventListener('mouseup', onPointerUp);
-        
-        window.addEventListener('touchstart', onPointerDown, { passive: false });
-        window.addEventListener('touchmove', onPointerMove, { passive: false });
-        window.addEventListener('touchend', onPointerUp);
+        window.addEventListener('mousedown', handleDown);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleUp);
+        window.addEventListener('touchstart', handleDown, { passive: false });
+        window.addEventListener('touchmove', handleMove, { passive: false });
+        window.addEventListener('touchend', handleUp);
 
-        // --- UI Events ---
-        document.getElementById('reset-btn').addEventListener('click', () => {
-            currentAngle = Math.PI; // Force to 180 deg
+        // --- RESET ---
+        document.getElementById('reset-btn').addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            isResetting = true;
+            currentAngle = Math.PI; 
             updateGeometry();
+            setTimeout(() => { isResetting = false; }, 300);
         });
 
         document.getElementById('show-lines-cb').onchange = (e) => perpLine1.visible = perpLine2.visible = e.target.checked;
@@ -214,6 +209,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        currentAngle = Math.PI - (Math.PI / 3); // Start at 60 deg
         updateGeometry();
         function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
         animate();
