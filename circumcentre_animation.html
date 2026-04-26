@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perpendicular Bisectors & Circumcenter</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --panel: #ffffff;
+    --primary: #2563eb;
+    --accent: #f59e0b;
+    --text: #1e293b;
+    --gray: #64748b;
+    --success: #16a34a;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  body { background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
+  h1 { font-size: 1.5rem; margin-bottom: 8px; }
+  .subtitle { color: var(--gray); font-size: 0.9rem; margin-bottom: 20px; }
+  .canvas-wrap { background: var(--panel); padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border); }
+  canvas { cursor: pointer; display: block; border-radius: 8px; background: #fafafa; }
+  #prompt { 
+    margin-top: 15px; padding: 12px 20px; background: #eff6ff; 
+    border: 1px solid var(--primary); border-radius: 8px; 
+    font-size: 1rem; color: var(--primary); text-align: center; 
+    transition: all 0.3s; min-width: 300px;
+  }
+  #prompt.done { background: #f0fdf4; border-color: var(--success); color: var(--success); }
+  .hint { font-size: 0.8rem; color: var(--gray); margin-top: 8px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Perpendicular Bisectors → Circumcenter & Circumcircle</h1>
+<p class="subtitle">Step-by-step interactive demonstration (Levels 2 → 3)</p>
+
+<div class="canvas-wrap">
+  <canvas id="canvas" width="760" height="520"></canvas>
+</div>
+<div id="prompt">1️⃣ Click to start drawing the triangle</div>
+<div class="hint">Follow the prompt to progress through each geometric step.</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const promptEl = document.getElementById('prompt');
+
+// --- Geometry Setup ---
+const A = {x: 180, y: 140}, B = {x: 80, y: 400}, C = {x: 590, y: 350};
+const dist = (p,q) => Math.hypot(p.x-q.x, p.y-q.y);
+const norm = (v) => { let n = Math.hypot(v.x,v.y); return {x:v.x/n, y:v.y/n}; };
+const sub = (p,q) => ({x:p.x-q.x, y:p.y-q.y});
+const add = (p,q) => ({x:p.x+q.x, y:p.y+q.y});
+const scale = (v,s) => ({x:v.x*s, y:v.y*s});
+const mid = (p,q) => ({x:(p.x+q.x)/2, y:(p.y+q.y)/2});
+const dot = (u,v) => u.x*v.x + u.y*v.y;
+
+const M_AB = mid(A, B), M_BC = mid(B, C), M_CA = mid(C, A);
+
+// Perpendicular direction for side P1-P2
+const perpDir = (p1, p2) => {
+  const v = sub(p2, p1);
+  return norm({x: -v.y, y: v.x});
+};
+const d_AB = perpDir(A, B);
+const d_BC = perpDir(B, C);
+const d_CA = perpDir(C, A);
+
+// Intersection of two lines (point + direction)
+const intersectLines = (p1, d1, p2, d2) => {
+  const denom = d1.x * d2.y - d1.y * d2.x;
+  if (Math.abs(denom) < 1e-6) return null;
+  const t = ((p2.x - p1.x) * d2.y - (p2.y - p1.y) * d2.x) / denom;
+  return {x: p1.x + t * d1.x, y: p1.y + t * d1.y};
+};
+
+const O = intersectLines(M_AB, d_AB, M_BC, d_BC); // Circumcenter
+const R = dist(O, A); // Circumradius
+
+// --- State & Animation Control ---
+let state = {
+  blinkActive: false,
+  highlightSeg: null,
+  highlightColor: null,
+  drawTriangle: false,
+  drawPAB: false,
+  drawPBC: false,
+  drawPCA: false,
+  dimOthers: false,
+  drawRadii: false,
+  drawCircle: false
+};
+
+let resolveClick;
+function waitForClick() { return new Promise(res => { resolveClick = res; }); }
+canvas.addEventListener('click', () => { if (resolveClick) { resolveClick(); resolveClick = null; } });
+
+function updatePrompt(text, done=false) {
+  promptEl.textContent = text;
+  promptEl.className = done ? 'done' : '';
+}
+
+function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
+
+// --- Blinking Logic ---
+async function blinkSideHalves(side, cycles) {
+  state.blinkActive = true;
+  let p1, p2, m;
+  if (side === 'AB') { p1 = A; p2 = B; m = M_AB; }
+  else if (side === 'BC') { p1 = B; p2 = C; m = M_BC; }
+  else { p1 = C; p2 = A; m = M_CA; }
+
+  for (let i = 0; i < cycles * 2; i++) {
+    // Alternate highlighting the two halves
+    state.highlightSeg = (i % 2 === 0) ? {a: p1, b: m} : {a: m, b: p2};
+    state.highlightColor = (i % 2 === 0) ? '#ef4444' : '#3b82f6';
+    await sleep(350);
+  }
+  state.blinkActive = false;
+  state.highlightSeg = null;
+  await sleep(200);
+}
+
+// --- Rendering ---
+function drawLine(p1, p2, color, width=2, dash=[]) {
+  ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+  ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash); ctx.stroke(); ctx.setLineDash([]);
+}
+
+function drawRightAngle(center, dirSide, dirPerp, size=10) {
+  const uS = scale(dirSide, size);
+  const uP = scale(dirPerp, size);
+  ctx.beginPath();
+  ctx.moveTo(center.x + uS.x, center.y + uS.y);
+  ctx.lineTo(center.x + uS.x + uP.x, center.y + uS.y + uP.y);
+  ctx.lineTo(center.x + uP.x, center.y + uP.y);
+  ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2; ctx.stroke();
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Grid
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+  for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+  for(let i=0; i<canvas.height; i+=40) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
+
+  // Triangle
+  if (state.drawTriangle) {
+    drawLine(A, B, '#475569', 3); drawLine(B, C, '#475569', 3); drawLine(C, A, '#475569', 3);
+    ctx.font = 'bold 14px sans-serif'; ctx.fillStyle = '#334155';
+    ctx.fillText('A', A.x-18, A.y-8); ctx.fillText('B', B.x-18, B.y+16); ctx.fillText('C', C.x+10, C.y+5);
+  }
+
+  // Perpendicular Bisectors
+  const ext = 350;
+  const drawPBIsect = (m, d, color, alpha=1) => {
+    ctx.globalAlpha = alpha;
+    drawLine(add(m, scale(d, ext)), add(m, scale(d, -ext)), color, 3, [6, 4]);
+    ctx.globalAlpha = 1;
+  };
+
+  if (state.drawPAB) drawPBIsect(M_AB, d_AB, '#3b82f6');
+  if (state.drawPBC) {
+    const a = state.dimOthers ? 0.2 : 1.0;
+    drawPBIsect(M_BC, d_BC, '#16a34a', a);
+  }
+  if (state.drawPCA) {
+    const a = state.dimOthers ? 0.2 : 1.0;
+    drawPBIsect(M_CA, d_CA, '#16a34a', a);
+  }
+
+  // Right Angle Markers at midpoints
+  if (state.drawPAB) drawRightAngle(M_AB, norm(sub(B, A)), d_AB, 12);
+  if (state.drawPBC) drawRightAngle(M_BC, norm(sub(C, B)), d_BC, 12);
+  if (state.drawPCA) drawRightAngle(M_CA, norm(sub(A, C)), d_CA, 12);
+
+  // Blinking Highlights
+  if (state.blinkActive && state.highlightSeg) {
+    ctx.strokeStyle = state.highlightColor;
+    ctx.lineWidth = 8; ctx.lineCap = 'round';
+    drawLine(state.highlightSeg.a, state.highlightSeg.b, state.highlightColor, 8);
+    ctx.lineCap = 'butt';
+    
+    // Half-label
+    const midH = mid(state.highlightSeg.a, state.highlightSeg.b);
+    ctx.fillStyle = state.highlightColor;
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('½', midH.x - 10, midH.y + 5);
+  }
+
+  // Midpoints
+  if (state.drawPAB) { ctx.beginPath(); ctx.arc(M_AB.x, M_AB.y, 4, 0, Math.PI*2); ctx.fillStyle = '#3b82f6'; ctx.fill(); }
+  if (state.drawPBC) { ctx.beginPath(); ctx.arc(M_BC.x, M_BC.y, 4, 0, Math.PI*2); ctx.fillStyle = '#16a34a'; ctx.fill(); }
+  if (state.drawPCA) { ctx.beginPath(); ctx.arc(M_CA.x, M_CA.y, 4, 0, Math.PI*2); ctx.fillStyle = '#16a34a'; ctx.fill(); }
+
+  // Circumcenter
+  if (state.drawPBC) {
+    ctx.beginPath(); ctx.arc(O.x, O.y, 5, 0, Math.PI*2); ctx.fillStyle = '#2563eb'; ctx.fill();
+    ctx.font = 'bold 14px sans-serif'; ctx.fillStyle = '#2563eb'; ctx.fillText('O', O.x+10, O.y-8);
+  }
+
+  // Radii (O to vertices)
+  if (state.drawRadii) {
+    drawLine(O, A, '#f59e0b', 3.5); drawLine(O, B, '#f59e0b', 3.5); drawLine(O, C, '#f59e0b', 3.5);
+    // R labels
+    ctx.fillStyle = '#d97706'; ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('R', mid(O, A).x-10, mid(O, A).y+5);
+    ctx.fillText('R', mid(O, B).x+5, mid(O, B).y-5);
+    ctx.fillText('R', mid(O, C).x+5, mid(O, C).y+10);
+  }
+
+  // Circumcircle
+  if (state.drawCircle) {
+    ctx.beginPath(); ctx.arc(O.x, O.y, R, 0, Math.PI*2);
+    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = 'rgba(37,99,235,0.08)'; ctx.fill();
+  }
+}
+
+// --- Main Async Flow ---
+async function main() {
+  render();
+  
+  // Step 1
+  await waitForClick();
+  state.drawTriangle = true; render();
+  await sleep(600);
+  updatePrompt("2️⃣ Click to draw ⊥ bisector of AB & highlight equal halves");
+
+  // Step 2
+  await waitForClick();
+  state.drawPAB = true; render();
+  await blinkSideHalves('AB', 5);
+  updatePrompt("3️⃣ Click to draw ⊥ bisectors of BC & CA and highlight halves");
+
+  // Step 3
+  await waitForClick();
+  state.drawPBC = true; state.drawPCA = true; render();
+  await blinkSideHalves('BC', 3);
+  await blinkSideHalves('CA', 3);
+  updatePrompt("4️⃣ Click to dim new bisectors & draw lines O→A, O→B, O→C");
+
+  // Step 4
+  await waitForClick();
+  state.dimOthers = true; state.drawRadii = true; render();
+  updatePrompt("5️⃣ Click to draw the circumcircle");
+
+  // Step 5
+  await waitForClick();
+  state.drawCircle = true; render();
+  updatePrompt("✅ Complete! OA = OB = OC = R → perfect circumcircle.", true);
+}
+
+main();
+setInterval(render, 1000/60);
+</script>
+</body>
+</html>
