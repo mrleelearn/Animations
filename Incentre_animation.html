@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Angle Bisector & Incenter Animation</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --panel: #ffffff;
+    --primary: #2563eb;
+    --accent: #f59e0b;
+    --text: #1e293b;
+    --gray: #64748b;
+    --success: #16a34a;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  body { background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
+  h1 { font-size: 1.5rem; margin-bottom: 8px; }
+  .subtitle { color: var(--gray); font-size: 0.9rem; margin-bottom: 20px; }
+  .canvas-wrap { background: var(--panel); padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border); }
+  canvas { cursor: pointer; display: block; border-radius: 8px; background: #fafafa; }
+  #prompt { 
+    margin-top: 15px; padding: 12px 20px; background: #eff6ff; 
+    border: 1px solid var(--primary); border-radius: 8px; 
+    font-size: 1rem; color: var(--primary); text-align: center; 
+    transition: all 0.3s; min-width: 300px;
+  }
+  #prompt.done { background: #f0fdf4; border-color: var(--success); color: var(--success); }
+  .hint { font-size: 0.8rem; color: var(--gray); margin-top: 8px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Angle Bisectors → Incenter & Incircle</h1>
+<p class="subtitle">Step-by-step interactive demonstration (Levels 2 → 3)</p>
+
+<div class="canvas-wrap">
+  <canvas id="canvas" width="760" height="520"></canvas>
+</div>
+<div id="prompt">1️⃣ Click to start drawing the triangle</div>
+<div class="hint">Follow the prompt to progress through each geometric step.</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const promptEl = document.getElementById('prompt');
+
+// --- Geometry Setup ---
+const A = {x: 160, y: 130}, B = {x: 90, y: 410}, C = {x: 620, y: 360};
+const dist = (p,q) => Math.hypot(p.x-q.x, p.y-q.y);
+const norm = (v) => { let n = Math.hypot(v.x,v.y); return {x:v.x/n, y:v.y/n}; };
+const sub = (p,q) => ({x:p.x-q.x, y:p.y-q.y});
+const add = (p,q) => ({x:p.x+q.x, y:p.y+q.y});
+const scale = (v,s) => ({x:v.x*s, y:v.y*s});
+const dot = (u,v) => u.x*v.x + u.y*v.y;
+
+const a = dist(B,C), b = dist(A,C), c = dist(A,B);
+const I = {
+  x: (a*A.x + b*B.x + c*C.x) / (a+b+c),
+  y: (a*A.y + b*B.y + c*C.y) / (a+b+c)
+};
+
+// Bisector directions (from vertex inward)
+const bisectorDir = (P, Q, R) => norm(add(norm(sub(Q,P)), norm(sub(R,P))));
+const dirA = bisectorDir(A, B, C);
+const dirB = bisectorDir(B, A, C);
+const dirC = bisectorDir(C, A, B);
+
+const perpFoot = (I, P1, P2) => {
+  const v = sub(P2, P1);
+  const t = dot(sub(I, P1), v) / dot(v, v);
+  return { x: P1.x + t*v.x, y: P1.y + t*v.y };
+};
+const F_AB = perpFoot(I, A, B);
+const F_AC = perpFoot(I, A, C);
+const F_BC = perpFoot(I, B, C);
+const r = dist(I, F_AB);
+
+// --- State & Animation Control ---
+let state = {
+  step: 0,
+  blinkActive: false,
+  highlightSide: 'none', // 'left' or 'right'
+  highlightParams: null,
+  drawTriangle: false,
+  drawBisA: false,
+  drawBisBC: false,
+  dimOthers: false,
+  drawPerpAB: false,
+  drawPerpAC: false,
+  drawPerpBC: false,
+  drawIncircle: false
+};
+
+let resolveClick;
+function waitForClick() { return new Promise(res => { resolveClick = res; }); }
+canvas.addEventListener('click', () => { if (resolveClick) { resolveClick(); resolveClick = null; } });
+
+function updatePrompt(text, done=false) {
+  promptEl.textContent = text;
+  promptEl.className = done ? 'done' : '';
+}
+
+function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
+
+// --- Robust Minor-Arc Sector Drawing ---
+function drawMinorArcSector(center, v1, v2, radius, color, alpha) {
+  let a1 = Math.atan2(v1.y, v1.x);
+  let a2 = Math.atan2(v2.y, v2.x);
+  
+  // Calculate shortest angular difference
+  let diff = a2 - a1;
+  while (diff <= -Math.PI) diff += 2 * Math.PI;
+  while (diff > Math.PI) diff -= 2 * Math.PI;
+  
+  // If diff is negative, we sweep clockwise to get the shorter arc
+  let ccw = diff < 0;
+  
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(center.x, center.y);
+  ctx.arc(center.x, center.y, radius, a1, a2, ccw);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Subtle border for clarity
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// --- Blinking Logic ---
+async function alternateAngles(vertex, cycles) {
+  let center, arm1, arm2, dir;
+  if (vertex === 'A') { center = A; arm1 = B; arm2 = C; dir = dirA; }
+  else if (vertex === 'B') { center = B; arm1 = C; arm2 = A; dir = dirB; }
+  else { center = C; arm1 = A; arm2 = B; dir = dirC; }
+  
+  const vBis = scale(dir, 100); // Direction vector for bisector tip
+  const vArm1 = sub(arm1, center);
+  const vArm2 = sub(arm2, center);
+  
+  state.blinkActive = true;
+  state.highlightParams = { center, vBis, vArm1, vArm2 };
+  
+  // cycles * 2 ensures both sides flash 'cycles' times
+  for (let i = 0; i < cycles * 2; i++) {
+    state.highlightSide = (i % 2 === 0) ? 'left' : 'right';
+    await sleep(400);
+  }
+  state.blinkActive = false;
+  state.highlightSide = 'none';
+  await sleep(200);
+}
+
+// --- Rendering ---
+function drawLine(p1, p2, color, width=2, dash=[]) {
+  ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+  ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Grid
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+  for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+  for(let i=0; i<canvas.height; i+=40) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
+
+  // Triangle
+  if (state.drawTriangle) {
+    drawLine(A, B, '#475569', 3); drawLine(B, C, '#475569', 3); drawLine(C, A, '#475569', 3);
+    ctx.font = 'bold 14px sans-serif'; ctx.fillStyle = '#334155';
+    ctx.fillText('A', A.x-15, A.y-10); ctx.fillText('B', B.x-20, B.y+15); ctx.fillText('C', C.x+10, C.y+5);
+  }
+
+  // Bisectors
+  const extLen = 400;
+  if (state.drawBisA) drawLine(A, add(A, scale(dirA, extLen)), '#3b82f6', 3);
+  if (state.drawBisBC) {
+    const alpha = state.dimOthers ? 0.2 : 1.0;
+    ctx.globalAlpha = alpha;
+    drawLine(B, add(B, scale(dirB, extLen)), '#16a34a', 3);
+    drawLine(C, add(C, scale(dirC, extLen)), '#16a34a', 3);
+    ctx.globalAlpha = 1.0;
+  }
+
+  // Blinking Angles (Fixed to minor arcs)
+  if (state.blinkActive && state.highlightParams) {
+    const { center, vBis, vArm1, vArm2 } = state.highlightParams;
+    
+    // Left half-angle (Red)
+    const leftAlpha = state.highlightSide === 'left' ? 0.55 : 0.0;
+    drawMinorArcSector(center, vArm1, vBis, 75, '#ef4444', leftAlpha);
+    if (state.highlightSide === 'left') {
+      ctx.fillStyle = '#b91c1c'; ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('α', center.x + (vArm1.x+vBis.x)*0.15, center.y + (vArm1.y+vBis.y)*0.15);
+    }
+    
+    // Right half-angle (Blue)
+    const rightAlpha = state.highlightSide === 'right' ? 0.55 : 0.0;
+    drawMinorArcSector(center, vArm2, vBis, 75, '#3b82f6', rightAlpha);
+    if (state.highlightSide === 'right') {
+      ctx.fillStyle = '#1d4ed8'; ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('α', center.x + (vArm2.x+vBis.x)*0.15, center.y + (vArm2.y+vBis.y)*0.15);
+    }
+  }
+
+  // Incenter
+  if (state.drawBisBC) {
+    ctx.beginPath(); ctx.arc(I.x, I.y, 5, 0, Math.PI*2); ctx.fillStyle = '#2563eb'; ctx.fill();
+    ctx.font = 'bold 14px sans-serif'; ctx.fillStyle = '#2563eb'; ctx.fillText('I', I.x+10, I.y-10);
+  }
+
+  // Perpendiculars
+  if (state.drawPerpAB) drawLine(I, F_AB, '#f59e0b', 4);
+  if (state.drawPerpAC) drawLine(I, F_AC, '#f59e0b', 4);
+  if (state.drawPerpBC) drawLine(I, F_BC, '#f59e0b', 4);
+
+  const drawRightAngle = (p, v1, v2, size=12) => {
+    const u1 = norm(v1), u2 = norm(v2);
+    ctx.beginPath(); ctx.moveTo(p.x+u1.x*size, p.y+u1.y*size);
+    ctx.lineTo(p.x+(u1.x+u2.x)*size, p.y+(u1.y+u2.y)*size);
+    ctx.lineTo(p.x+u2.x*size, p.y+u2.y*size);
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.stroke();
+  };
+  if (state.drawPerpAB) drawRightAngle(F_AB, sub(I, F_AB), sub(A, F_AB));
+  if (state.drawPerpAC) drawRightAngle(F_AC, sub(I, F_AC), sub(A, F_AC));
+  if (state.drawPerpBC) drawRightAngle(F_BC, sub(I, F_BC), sub(B, F_BC));
+
+  // Incircle
+  if (state.drawIncircle) {
+    ctx.beginPath(); ctx.arc(I.x, I.y, r, 0, Math.PI*2);
+    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.fillStyle = 'rgba(37,99,235,0.08)'; ctx.fill();
+  }
+}
+
+// --- Main Async Flow ---
+async function main() {
+  render();
+  
+  // Step 1
+  await waitForClick();
+  state.drawTriangle = true; render();
+  await sleep(600);
+  updatePrompt("2️⃣ Click to draw bisector of ∠A (watch the 2 acute halves blink)");
+
+  // Step 2
+  await waitForClick();
+  state.drawBisA = true; render();
+  await alternateAngles('A', 5);
+  updatePrompt("3️⃣ Click to draw bisectors of ∠B & ∠C and highlight");
+
+  // Step 3
+  await waitForClick();
+  state.drawBisBC = true; render();
+  await alternateAngles('B', 3);
+  await alternateAngles('C', 3);
+  updatePrompt("4️⃣ Click to dim new bisectors & draw ⊥ lines to ∠A's sides");
+
+  // Step 4
+  await waitForClick();
+  state.dimOthers = true; state.drawPerpAB = true; state.drawPerpAC = true; render();
+  updatePrompt("5️⃣ Click to add the 3rd ⊥ line to the remaining side");
+
+  // Step 5
+  await waitForClick();
+  state.drawPerpBC = true; render();
+  updatePrompt("6️⃣ Click to draw the inscribed circle");
+
+  // Step 6
+  await waitForClick();
+  state.drawIncircle = true; render();
+  updatePrompt("✅ Complete! I is equidistant to all sides → perfect incircle.", true);
+}
+
+main();
+setInterval(render, 1000/60);
+</script>
+</body>
+</html>
