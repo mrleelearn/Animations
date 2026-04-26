@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Angle Bisector Explorer (Level 1)</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --panel: #ffffff;
+    --primary: #2563eb;
+    --success: #16a34a;
+    --accent: #f59e0b;
+    --text: #1e293b;
+    --gray: #64748b;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  body { background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
+  h1 { font-size: 1.5rem; margin-bottom: 10px; }
+  .subtitle { color: var(--gray); font-size: 0.9rem; margin-bottom: 20px; }
+  .container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 1200px; width: 100%; }
+  .canvas-wrap { background: var(--panel); padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border); }
+  canvas { cursor: crosshair; display: block; border-radius: 8px; background: #fafafa; }
+  .panel { flex: 1; min-width: 300px; max-width: 350px; background: var(--panel); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 15px; }
+  .step { padding: 12px; border-radius: 8px; background: #f1f5f9; border-left: 4px solid var(--gray); transition: all 0.3s; }
+  .step.active { border-left-color: var(--primary); background: #eff6ff; box-shadow: 0 2px 8px rgba(37,99,235,0.15); }
+  .step.completed { border-left-color: var(--success); background: #f0fdf4; }
+  .step h3 { font-size: 0.95rem; margin-bottom: 5px; }
+  .step p { font-size: 0.85rem; color: var(--gray); }
+  .results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .result-card { background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+  .result-card .label { font-size: 0.75rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; }
+  .result-card .value { font-size: 1.1rem; font-weight: 600; margin-top: 4px; color: var(--text); }
+  .btn { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: 0.2s; margin-top: auto; }
+  .btn:hover { background: #1d4ed8; }
+  .note { font-size: 0.8rem; color: var(--gray); margin-top: 10px; line-height: 1.4; }
+  .highlight { color: var(--accent); font-weight: 500; }
+  .math-eq { background: #fffbeb; padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.85em; color: #92400e; }
+</style>
+</head>
+<body>
+
+<h1>Angle Bisector Explorer</h1>
+<p class="subtitle">Level 1: Demonstrating the equidistance property of a point on an angle bisector</p>
+
+<div class="container">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="760" height="560"></canvas>
+  </div>
+
+  <div class="panel">
+    <div class="step active" id="step0">
+      <h3>1️⃣ Place Point P</h3>
+      <p>Click anywhere on the <span class="highlight">vertical angle bisector</span> to fix a point.</p>
+    </div>
+    <div class="step" id="step1">
+      <h3>2️⃣ Place Point Q₁</h3>
+      <p>Click anywhere on the <span class="highlight">left arm</span> of the angle.</p>
+    </div>
+    <div class="step" id="step2">
+      <h3>3️⃣ Place Point Q₂</h3>
+      <p>Click anywhere on the <span class="highlight">right arm</span> of the angle.</p>
+    </div>
+
+    <div class="results" id="results" style="display:none;">
+      <div class="result-card">
+        <div class="label">Length P→Q₁</div>
+        <div class="value" id="len1">-- cm</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Length P→Q₂</div>
+        <div class="value" id="len2">-- cm</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Angle at Q₁</div>
+        <div class="value" id="ang1">-- °</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Angle at Q₂</div>
+        <div class="value" id="ang2">-- °</div>
+      </div>
+    </div>
+
+    <div class="note">
+      💡 <strong>Level 1 Insight:</strong> The vertex markers show that <span class="highlight">∠(Left, Bisector) = ∠(Bisector, Right)</span>.<br><br>
+      If you click such that the new lines are perpendicular (≈90.0°) to the arms, you will see both lengths become equal: <span class="math-eq">PQ₁ ≈ PQ₂</span>.
+    </div>
+    <button class="btn" id="resetBtn">Reset & Try Again</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const PX_PER_CM = 37.795;
+
+// Geometry Setup
+const V = { x: 380, y: 480 };
+const HALF_ANGLE = 35 * Math.PI / 180;
+const ARM_LEN = 420;
+// Bisector points straight up (-PI/2 radians)
+const BISECTOR_DIR = { x: 0, y: -1 };
+const ARM1_DIR = { x: -Math.sin(HALF_ANGLE), y: -Math.cos(HALF_ANGLE) };
+const ARM2_DIR = { x: Math.sin(HALF_ANGLE), y: -Math.cos(HALF_ANGLE) };
+
+// State
+let state = 0;
+let points = { P: null, Q1: null, Q2: null };
+
+// UI Elements
+const steps = [document.getElementById('step0'), document.getElementById('step1'), document.getElementById('step2')];
+const results = document.getElementById('results');
+const len1El = document.getElementById('len1');
+const len2El = document.getElementById('len2');
+const ang1El = document.getElementById('ang1');
+const ang2El = document.getElementById('ang2');
+const resetBtn = document.getElementById('resetBtn');
+
+function updateUI() {
+  steps.forEach((s, i) => {
+    s.className = 'step';
+    if (i === state) s.classList.add('active');
+    if (i < state) s.classList.add('completed');
+  });
+  if (state === 3) results.style.display = 'grid';
+  else results.style.display = 'none';
+}
+
+// Vector Math Helpers
+const dot = (a, b) => a.x * b.x + a.y * b.y;
+const norm = (v) => Math.hypot(v.x, v.y);
+const angleBetween = (v1, v2) => Math.acos(Math.abs(dot(v1, v2) / (norm(v1) * norm(v2)))) * 180 / Math.PI;
+const projectToLine = (pt, start, dir, maxT) => {
+  const toPt = { x: pt.x - start.x, y: pt.y - start.y };
+  const t = dot(toPt, dir);
+  if (t < 0 || t > maxT) return null;
+  return { x: start.x + t * dir.x, y: start.y + t * dir.y, t };
+};
+const dist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
+
+function drawLine(start, dir, len, color, width, dash = []) {
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  ctx.lineTo(start.x + dir.x * len, start.y + dir.y * len);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.setLineDash(dash);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawPoint(p, color, label) {
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillStyle = color;
+  ctx.fillText(label, p.x + 10, p.y - 10);
+}
+
+function drawAngleArcs() {
+  const R = 60;
+  // Angles relative to X-axis: Up is -PI/2
+  const aB = -Math.PI / 2; 
+  const a1 = aB - HALF_ANGLE; // Left arm angle
+  const a2 = aB + HALF_ANGLE; // Right arm angle
+  
+  // Left half-angle arc
+  ctx.beginPath();
+  ctx.arc(V.x, V.y, R, aB, a1, true);
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = '#ef4444';
+  ctx.fillText('α', V.x - 35, V.y - 65);
+
+  // Right half-angle arc
+  ctx.beginPath();
+  ctx.arc(V.x, V.y, R, a2, aB, true);
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = '#3b82f6';
+  ctx.fillText('α', V.x + 20, V.y - 65);
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw Vertex V
+  ctx.beginPath();
+  ctx.arc(V.x, V.y, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#64748b';
+  ctx.fill();
+
+  // Highlight active target line
+  const targetDir = state === 0 ? BISECTOR_DIR : (state === 1 ? ARM1_DIR : ARM2_DIR);
+  const targetColor = state < 3 ? '#3b82f6' : '#64748b';
+  
+  // Draw arms & bisector
+  drawLine(V, ARM1_DIR, ARM_LEN, '#94a3b8', 2);
+  drawLine(V, ARM2_DIR, ARM_LEN, '#94a3b8', 2);
+  drawLine(V, BISECTOR_DIR, ARM_LEN, '#cbd5e1', 2, [8, 4]);
+
+  // Highlight active line
+  if (state < 3) {
+    ctx.globalAlpha = 0.25;
+    drawLine(V, targetDir, ARM_LEN, targetColor, 12);
+    ctx.globalAlpha = 1.0;
+  }
+
+  // Draw Angle Markers (α)
+  drawAngleArcs();
+
+  // Draw placed points & segments
+  if (points.P) drawPoint(points.P, '#16a34a', 'P');
+  if (points.Q1) {
+    drawPoint(points.Q1, '#dc2626', 'Q₁');
+    if (points.P) {
+      drawLine(points.P, {x: points.Q1.x - points.P.x, y: points.Q1.y - points.P.y}, 1, '#2563eb', 2);
+    }
+  }
+  if (points.Q2) {
+    drawPoint(points.Q2, '#dc2626', 'Q₂');
+    if (points.P) {
+      drawLine(points.P, {x: points.Q2.x - points.P.x, y: points.Q2.y - points.P.y}, 1, '#2563eb', 2);
+    }
+  }
+
+  // Vertex label
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#475569';
+  ctx.fillText('V', V.x - 15, V.y + 15);
+}
+
+canvas.addEventListener('click', (e) => {
+  if (state > 2) return;
+  
+  const rect = canvas.getBoundingClientRect();
+  const mouse = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  
+  let targetDir, limitT;
+  const threshold = 18;
+  
+  if (state === 0) targetDir = BISECTOR_DIR;
+  else if (state === 1) targetDir = ARM1_DIR;
+  else targetDir = ARM2_DIR;
+  
+  const proj = projectToLine(mouse, V, targetDir, ARM_LEN);
+  
+  if (proj && dist(mouse, proj) < threshold) {
+    if (state === 0) {
+      points.P = { x: proj.x, y: proj.y };
+      state = 1;
+    } else if (state === 1) {
+      points.Q1 = { x: proj.x, y: proj.y };
+      state = 2;
+    } else if (state === 2) {
+      points.Q2 = { x: proj.x, y: proj.y };
+      state = 3;
+      calculateResults();
+    }
+    updateUI();
+    render();
+  }
+});
+
+function calculateResults() {
+  const d1 = dist(points.P, points.Q1) / PX_PER_CM;
+  const d2 = dist(points.P, points.Q2) / PX_PER_CM;
+  
+  const q1ToP = { x: points.P.x - points.Q1.x, y: points.P.y - points.Q1.y };
+  const q1ToV = { x: V.x - points.Q1.x, y: V.y - points.Q1.y };
+  const ang1 = angleBetween(q1ToP, q1ToV);
+  
+  const q2ToP = { x: points.P.x - points.Q2.x, y: points.P.y - points.Q2.y };
+  const q2ToV = { x: V.x - points.Q2.x, y: V.y - points.Q2.y };
+  const ang2 = angleBetween(q2ToP, q2ToV);
+  
+  len1El.textContent = d1.toFixed(2) + ' cm';
+  len2El.textContent = d2.toFixed(2) + ' cm';
+  ang1El.textContent = ang1.toFixed(1) + '°';
+  ang2El.textContent = ang2.toFixed(1) + '°';
+}
+
+resetBtn.addEventListener('click', () => {
+  state = 0;
+  points = { P: null, Q1: null, Q2: null };
+  updateUI();
+  render();
+});
+
+updateUI();
+render();
+</script>
+</body>
+</html>
