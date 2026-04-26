@@ -1,6 +1,9 @@
 # List of Math Animations
 Click on any animation below to view it:
 
+## Angle Bisector Animation
+- [Angle Bisector](Angle%20bisector%20game.html)
+
 ## Sine Wave Animations
 - [Sine Wave](sine_wave.html)
 
