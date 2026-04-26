@@ -5,7 +5,7 @@ Click on any animation below to view it:
 - [Angle Bisector](Angle%20bisector%20game.html)
 
 ## Incentre Animation
-- [Incentre](incentre_animation.html)
+
 
 ## Circumcentre Animation
 - [Circumcentre](circumcentre_animation.html)
