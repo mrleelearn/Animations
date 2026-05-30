@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equation Solver</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --text: #1e293b;
+      --accent: #3b82f6;
+      --cloud-fill: #e0f2fe;
+      --cloud-stroke: #7dd3fc;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #container {
+      position: relative;
+      width: 90vw;
+      max-width: 700px;
+      height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none;
+    }
+
+    .step.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .math {
+      font-family: 'Times New Roman', serif;
+      font-size: 2.5rem;
+      font-style: italic;
+      letter-spacing: 0.05em;
+      position: relative;
+      display: inline-block;
+    }
+
+    .step-title {
+      font-family: system-ui, sans-serif;
+      font-size: 1.1rem;
+      color: #64748b;
+      margin-bottom: 1.5rem;
+      font-style: normal;
+    }
+
+    .substitution-hint {
+      font-family: system-ui, sans-serif;
+      font-size: 1.2rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      font-style: normal;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .highlight { color: var(--accent); font-weight: bold; }
+
+    .target {
+      display: inline-block;
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      padding: 6px 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .enlarge {
+      transform: scale(1.5);
+      color: #475569;
+    }
+
+    .cloud {
+      position: absolute;
+      background-image: url("image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70'%3E%3Cpath d='M30,55 Q10,55 10,35 Q10,15 30,15 Q35,0 60,0 Q85,0 90,15 Q110,15 110,35 Q110,55 90,55 Z' fill='%23e0f2fe' stroke='%237dd3fc' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Times New Roman', serif;
+      font-style: italic;
+      font-weight: bold;
+      font-size: 2.2rem;
+      color: var(--text);
+      z-index: 10;
+      
+      transform: translate(-50%, -50%) scale(0.5);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .cloud.move-up {
+      opacity: 1;
+      transition: transform 3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s;
+    }
+
+    .cloud.fade-out {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.8);
+      transition: all 0.6s ease-in;
+    }
+
+    #hint {
+      position: fixed;
+      bottom: 30px;
+      font-size: 0.9rem;
+      color: #94a3b8;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="container">
+    <!-- Step 0: Original Equation -->
+    <div class="step active" id="step-0">
+      <div class="step-title">Original Equation</div>
+      <div class="math">
+        <span class="target">x<sup>4</sup></span> - 8<span class="target">x<sup>2</sup></span> - 9 = 0
+      </div>
+    </div>
+
+    <!-- Step 1: Substitution Animation -->
+    <div class="step" id="step-1">
+      <div class="step-title">Substitution Strategy</div>
+      <div class="substitution-hint">Let u = x²</div>
+      <div class="math">
+        <span id="anim-x4" class="target">x<sup>4</sup></span> - 8<span id="anim-x2" class="target">x<sup>2</sup></span> - 9 = 0
+      </div>
+      <div class="cloud" id="cloud-u2">u²</div>
+      <div class="cloud" id="cloud-u">u</div>
+    </div>
+
+    <!-- Step 2: Substituted Equation -->
+    <div class="step" id="step-2">
+      <div class="step-title">Quadratic Form</div>
+      <div class="math">u² - 8u - 9 = 0</div>
+    </div>
+
+    <!-- Step 3: Factored -->
+    <div class="step" id="step-3">
+      <div class="step-title">Factor the Quadratic</div>
+      <div class="math">(u - 9)(u + 1) = 0</div>
+    </div>
+
+    <!-- Step 4: Solve for u -->
+    <div class="step" id="step-4">
+      <div class="step-title">Solve for u</div>
+      <div class="math">u = 9 &nbsp; or &nbsp; u = -1</div>
+    </div>
+
+    <!-- Step 5: Substitute back -->
+    <div class="step" id="step-5">
+      <div class="step-title">Substitute back <span class="highlight">x² = u</span></div>
+      <div class="math">x² = 9 &nbsp; or &nbsp; x² = -1</div>
+    </div>
+
+    <!-- Step 6: Final Answer -->
+    <div class="step" id="step-6">
+      <div class="step-title">Final Solutions</div>
+      <div class="math">x = ±3, &nbsp; ±i</div>
+    </div>
+  </div>
+
+  <div id="hint">Click anywhere to advance</div>
+
+  <script>
+    let currentStep = 0;
+    const totalSteps = 7;
+    const steps = document.querySelectorAll('.step');
+    const hint = document.getElementById('hint');
+    let isAnimating = false;
+
+    function advanceStep() {
+      if (isAnimating || currentStep >= totalSteps - 1) {
+        if (currentStep >= totalSteps - 1) location.reload();
+        return;
+      }
+
+      steps[currentStep].classList.remove('active');
+      currentStep++;
+      steps[currentStep].classList.add('active');
+
+      if (currentStep === 1) {
+        triggerSubstitution();
+      }
+
+      if (currentStep === totalSteps - 1) {
+        hint.textContent = "Click to restart";
+      }
+    }
+
+    function triggerSubstitution() {
+      isAnimating = true;
+      hint.style.opacity = '0';
+      
+      const x4 = document.getElementById('anim-x4');
+      const x2 = document.getElementById('anim-x2');
+      const cloudU2 = document.getElementById('cloud-u2');
+      const cloudU = document.getElementById('cloud-u');
+      const container = document.getElementById('container');
+      const containerRect = container.getBoundingClientRect();
+
+      // 1. Enlarge targets
+      x4.classList.add('enlarge');
+      x2.classList.add('enlarge');
+
+      // 2. After enlargement, position clouds below and animate up
+      setTimeout(() => {
+        const getExactPos = (el) => {
+          const rect = el.getBoundingClientRect();
+          return {
+            cx: rect.left - containerRect.left + rect.width / 2,
+            cy: rect.top - containerRect.top + rect.height / 2,
+            w: rect.width,
+            h: rect.height
+          };
+        };
+
+        const pos4 = getExactPos(x4);
+        const pos2 = getExactPos(x2);
+
+        const inchInPixels = 35; // Approximate 1 inch at typical DPI
+
+        const positionCloud = (cloud, pos, text) => {
+          cloud.textContent = text;
+          cloud.style.left = `${pos.cx}px`;
+          cloud.style.width = `${pos.w * 0.85}px`;
+          cloud.style.height = `${pos.h * 1.5}px`;
+          
+          // Start one inch below the target, scaled down
+          const startY = pos.cy + inchInPixels;
+          cloud.style.top = `${startY}px`;
+          cloud.style.transform = `translate(-50%, -50%) scale(0.6)`;
+          cloud.style.opacity = '0';
+        };
+
+        positionCloud(cloudU2, pos4, 'u²');
+        positionCloud(cloudU, pos2, 'u');
+
+        void cloudU2.offsetWidth;
+
+        // 3. Animate clouds moving up over 3 seconds
+        cloudU2.classList.add('move-up');
+        cloudU.classList.add('move-up');
+
+        requestAnimationFrame(() => {
+          // Final position: centered on the target (move up from below)
+          cloudU2.style.top = `${pos4.cy}px`;
+          cloudU.style.top = `${pos2.cy}px`;
+          cloudU2.style.transform = `translate(-50%, -50%) scale(1)`;
+          cloudU.style.transform = `translate(-50%, -50%) scale(1)`;
+          cloudU2.style.opacity = '1';
+          cloudU.style.opacity = '1';
+        });
+
+        // 4. After 3s, fade out and unlock
+        setTimeout(() => {
+          cloudU2.classList.add('fade-out');
+          cloudU.classList.add('fade-out');
+          x4.classList.remove('enlarge');
+          x2.classList.remove('enlarge');
+
+          setTimeout(() => {
+            isAnimating = false;
+            hint.style.opacity = '1';
+          }, 600);
+        }, 3000);
+
+      }, 600);
+    }
+
+    document.addEventListener('click', advanceStep);
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'Enter') advanceStep();
+    });
+  </script>
+</body>
+</html>

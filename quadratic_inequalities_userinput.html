@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Inequality Graph with Side Label</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 40px;
+            background-color: #f4f4f9;
+        }
+        /* Container to place graph and label side-by-side */
+        .graph-wrapper {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        #graphCanvas {
+            background-color: white;
+            border: 2px solid #333;
+        }
+        .side-label-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 250px;
+        }
+        .live-function-label {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0000CD;
+            word-break: break-all;
+            margin-bottom: 10px;
+        }
+        .live-inequality-label {
+            font-size: 22px;
+            color: #555;
+            font-style: italic;
+        }
+        .equation-bar {
+            margin-top: 30px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="text"] {
+            font-size: 22px;
+            padding: 4px 8px;
+            width: 250px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        select {
+            font-size: 22px;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .error-msg {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="graph-wrapper">
+        <canvas id="graphCanvas" width="600" height="400"></canvas>
+        
+        <div class="side-label-panel">
+            <div class="live-function-label" id="liveFuncLabel">y = x^2 + 12x + 36</div>
+            <div class="live-inequality-label" id="liveInequalLabel">No inequality selected</div>
+        </div>
+    </div>
+    
+    <div id="errorText" class="error-msg"></div>
+
+    <div class="equation-bar">
+        <span>y = </span>
+        <input type="text" id="equationInput" value="x^2 + 12x + 36" oninput="updateGraph()" placeholder="e.g. x^2 - 4">
+        
+        <select id="inequalitySelect" onchange="updateGraph()">
+            <option value="none" selected disabled>...</option>
+            <option value="<">&lt;</option>
+            <option value=">">&gt;</option>
+            <option value=">=">&ge;</option>
+            <option value="<=">&le;</option>
+        </select>
+        <span>0</span>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const errorText = document.getElementById('errorText');
+        const liveFuncLabel = document.getElementById('liveFuncLabel');
+        const liveInequalLabel = document.getElementById('liveInequalLabel');
+        
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Centered coordinate mapping (-20 to 20 for both axes)
+        const minX = -20, maxX = 20; 
+        const minY = -20, maxY = 20;
+        
+        const scaleX = width / (maxX - minX);
+        const scaleY = height / (maxY - minY);
+        
+        const originX = -minX * scaleX; 
+        const originY = maxY * scaleY;  
+
+        // Numerical root finder for arbitrary compiled equations
+        function getRoots(compiledEq) {
+            let roots = [];
+            const steps = 800; 
+            const dx = (maxX - minX) / steps;
+            
+            let prevY2 = null, prevY1 = null, prevX1 = null;
+            
+            for (let i = 0; i <= steps; i++) {
+                let x = minX + i * dx;
+                let y;
+                try { y = compiledEq.evaluate({ x: x }); } catch(e) { continue; }
+                
+                if (prevY1 !== null) {
+                    if (prevY1 * y < 0) {
+                        let rootX = prevX1 - prevY1 * (x - prevX1) / (y - prevY1); 
+                        roots.push(rootX);
+                    } 
+                    else if (y === 0) {
+                        roots.push(x);
+                    }
+                    
+                    if (prevY2 !== null) {
+                        let slope1 = prevY1 - prevY2;
+                        let slope2 = y - prevY1;
+                        if (slope1 * slope2 <= 0 && Math.abs(prevY1) < 0.1 && prevY1 !== 0) {
+                            roots.push(prevX1);
+                        }
+                    }
+                }
+                prevY2 = prevY1;
+                prevY1 = y;
+                prevX1 = x;
+            }
+            
+            return roots.filter((r, idx) => roots.findIndex(other => Math.abs(other - r) < 0.1) === idx);
+        }
+
+        function draw(selection, compiledEq) {
+            // 1. Reset Background to White
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, width, height);
+
+            // 2. Handle Shading based on selection
+            if (selection === '>') {
+                ctx.fillStyle = 'rgba(135, 206, 250, 0.4)'; // Light blue
+                ctx.fillRect(0, 0, width, originY);
+            } 
+            else if (selection === '>=') {
+                ctx.fillStyle = 'rgba(135, 206, 250, 0.4)'; 
+                ctx.fillRect(0, 0, width, originY);
+            }
+            else if (selection === '<') {
+                ctx.fillStyle = 'rgba(255, 182, 193, 0.4)'; // Light pink
+                ctx.fillRect(0, originY, width, height - originY);
+            }
+            else if (selection === '<=') {
+                ctx.fillStyle = 'rgba(255, 182, 193, 0.4)'; 
+                ctx.fillRect(0, originY, width, height - originY);
+            }
+
+            // 3. Draw Grid/Axes
+            // X-axis (15 pixels thick, color coded)
+            ctx.beginPath();
+            if (selection === '>=') {
+                ctx.strokeStyle = 'rgba(255, 165, 0, 0.8)'; 
+            } else if (selection === '<=') {
+                ctx.strokeStyle = 'rgba(220, 20, 60, 0.8)'; 
+            } else {
+                ctx.strokeStyle = '#666'; 
+            }
+            ctx.lineWidth = 15; 
+            ctx.moveTo(0, originY);
+            ctx.lineTo(width, originY);
+            ctx.stroke();
+
+            // Y-axis
+            ctx.beginPath();
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 1.5;
+            ctx.moveTo(originX, 0);
+            ctx.lineTo(originX, height);
+            ctx.stroke();
+
+            if (!compiledEq) return; 
+
+            // 4. Draw the Function Curve
+            ctx.beginPath();
+            ctx.strokeStyle = '#0000CD'; 
+            ctx.lineWidth = 2.5;
+            
+            for (let px = 0; px <= width; px++) {
+                let x = (px - originX) / scaleX;
+                let y;
+                
+                try {
+                    y = compiledEq.evaluate({ x: x });
+                } catch(e) { break; } 
+
+                let py = originY - (y * scaleY);
+                
+                if (px === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+            ctx.stroke();
+
+            // 5. Draw Intersection Markers (Roots)
+            const roots = getRoots(compiledEq);
+            
+            roots.forEach(rX => {
+                let px = originX + rX * scaleX;
+                let py = originY; 
+                
+                ctx.beginPath();
+                ctx.arc(px, py, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = '#228B22'; 
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'white'; 
+                ctx.stroke();
+                
+                let valRounded = Math.round(rX * 100) / 100;
+                if (valRounded === 0) valRounded = 0; 
+                
+                ctx.fillStyle = '#111';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(valRounded, px, py - 18); 
+            });
+        }
+
+        function updateGraph() {
+            const selectElem = document.getElementById('inequalitySelect');
+            const selection = selectElem.value;
+            const eqString = document.getElementById('equationInput').value;
+            
+            let compiledEq = null;
+            errorText.innerText = ''; 
+
+            // Format clean string display for the labels (replace plain text formatting with nice presentation exponents)
+            let formattedDisplayString = eqString.replace(/\^2/g, '²');
+
+            if (eqString.trim() !== '') {
+                try {
+                    compiledEq = math.compile(eqString);
+                    compiledEq.evaluate({ x: 0 }); 
+                    
+                    // Update side function label
+                    liveFuncLabel.innerText = 'f(x) = ' + formattedDisplayString;
+                    
+                    // Update side inequality statement
+                    if(selection !== 'none') {
+                        let symbol = selectElem.options[selectElem.selectedIndex].text;
+                        liveInequalLabel.innerText = `Statement: ${formattedDisplayString} ${symbol} 0`;
+                    } else {
+                        liveInequalLabel.innerText = "No inequality selected";
+                    }
+                } catch (err) {
+                    errorText.innerText = 'Invalid mathematical expression';
+                    compiledEq = null;
+                    liveFuncLabel.innerText = 'y = --';
+                    liveInequalLabel.innerText = '';
+                }
+            } else {
+                liveFuncLabel.innerText = 'y = --';
+                liveInequalLabel.innerText = '';
+            }
+
+            draw(selection, compiledEq);
+        }
+
+        updateGraph();
+    </script>
+</body>
+</html>
