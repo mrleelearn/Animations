@@ -8,6 +8,7 @@ Click on any animation below to view it:
 
 ## Trigonometry Animations
 - [Sine Wave](sine_wave.html)
+- [Guitar String Plucking](guitar_string_vibration_graphing.html)
 - [Cosine Wave](cosine_wave%20no%20circle.html)
 - [Sine & Cosine Wave Combined](sine_cosine_wave%20no%20circle.html)
 - [Sine Wave Phase Change](sine%20wave%20phase%20change.html)
