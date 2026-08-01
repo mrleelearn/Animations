@@ -1,760 +1,1170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quadratic Roots & Vertex Explorer</title>
-    <style>
-        :root {
-            --bg-main: #f4f7fb;
-            --card-bg: #ffffff;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --accent-green: #10b981;
-            --accent-amber: #f59e0b;
-            --accent-red: #ef4444;
-            --accent-purple: #8b5cf6;
-            --border-color: #e2e8f0;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-dark);
-            padding: 24px 16px;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .app-container {
-            max-width: 1100px;
-            width: 100%;
-            background: var(--card-bg);
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            color: #ffffff;
-            padding: 20px 28px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        header h1 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .score-board {
-            display: flex;
-            gap: 16px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px 16px;
-            border-radius: 30px;
-            backdrop-filter: blur(4px);
-        }
-
-        .score-item {
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .score-item span {
-            color: #38bdf8;
-        }
-
-        .main-layout {
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            min-height: 600px;
-        }
-
-        @media (max-width: 900px) {
-            .main-layout {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .canvas-section {
-            padding: 20px;
-            background: #fafbfc;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            border-right: 1px solid var(--border-color);
-        }
-
-        .canvas-container {
-            position: relative;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: inset 0 0 0 1px var(--border-color), 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-
-        canvas {
-            display: block;
-            cursor: crosshair;
-        }
-
-        .canvas-overlay-info {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-            pointer-events: none;
-        }
-
-        .controls-section {
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            background: #ffffff;
-        }
-
-        .control-card {
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px;
-        }
-
-        .card-title {
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-
-        .input-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .input-prefix {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .equation-input {
-            width: 100%;
-            padding: 10px 14px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .equation-input:focus {
-            border-color: var(--primary);
-        }
-
-        .mode-toggle {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            background: #e2e8f0;
-            padding: 4px;
-            border-radius: 8px;
-        }
-
-        .mode-btn {
-            padding: 8px;
-            border: none;
-            background: transparent;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .mode-btn.active {
-            background: #ffffff;
-            color: var(--primary);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-hover);
-        }
-
-        .btn-secondary {
-            background: #ffffff;
-            color: var(--text-dark);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background: #f1f5f9;
-        }
-
-        .btn-danger {
-            background: #fef2f2;
-            color: var(--accent-red);
-            border: 1px solid #fecaca;
-        }
-
-        .btn-danger:hover {
-            background: #fee2e2;
-        }
-
-        .btn-amber {
-            background: #fffbe3;
-            color: #d97706;
-            border: 1px solid #fde68a;
-        }
-
-        .btn-amber:hover {
-            background: #fef3c7;
-        }
-
-        .hint-box {
-            background: #eff6ff;
-            border-left: 4px solid var(--primary);
-            padding: 12px;
-            border-radius: 0 8px 8px 0;
-            font-size: 0.85rem;
-            color: #1e40af;
-            display: none;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .feedback-message {
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            line-height: 1.4;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .feedback-message.success {
-            background: #ecfdf5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-
-        .feedback-message.error {
-            background: #fff1f2;
-            color: #9f1239;
-            border: 1px solid #fecdd3;
-        }
-
-        .selections-list {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 6px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .tag {
-            background: #e0e7ff;
-            color: #3730a3;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quadratic Quest — Master the Parabola</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(ellipse at top, #1e293b 0%, #0f172a 60%, #020617 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 12px;
+  }
+  .app { max-width: 1500px; margin: 0 auto; }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 22px;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    margin-bottom: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  h1 {
+    font-size: 22px;
+    background: linear-gradient(90deg, #38bdf8, #a78bfa, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .subtitle { font-size: 11px; color: #64748b; margin-top: 2px; letter-spacing: 0.5px; }
+  .stats { display: flex; gap: 20px; }
+  .stat { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
+  .stat-label { color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
+  .stat-value { font-size: 22px; font-weight: 800; color: #f1f5f9; font-variant-numeric: tabular-nums; }
+  .stat-value.score { color: #fbbf24; }
+  .stat-value.streak { color: #f472b6; }
+  .stat-value.timer { color: #38bdf8; }
+  .main {
+    display: grid;
+    grid-template-columns: 310px 1fr 340px;
+    gap: 14px;
+  }
+  .panel {
+    background: rgba(30, 41, 59, 0.55);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .panel h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #64748b;
+    margin-bottom: 10px;
+    margin-top: 14px;
+    font-weight: 700;
+  }
+  .panel h2:first-child { margin-top: 0; }
+  .equation-input {
+    display: flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    transition: border-color 0.2s;
+  }
+  .equation-input:focus-within { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15); }
+  .equation-prefix { color: #38bdf8; font-weight: 700; margin-right: 8px; font-family: 'Courier New', monospace; font-size: 17px; }
+  .equation-input input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #f1f5f9;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    outline: none;
+    font-weight: 600;
+  }
+  .mode-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mode-btn, .diff-btn {
+    padding: 10px 8px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 9px;
+    color: #cbd5e1;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .mode-btn:hover, .diff-btn:hover { background: rgba(56, 189, 248, 0.1); border-color: #38bdf8; transform: translateY(-1px); }
+  .mode-btn.active { background: linear-gradient(135deg, #38bdf8, #a78bfa); color: white; border-color: transparent; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25); }
+  .difficulty-selector { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .diff-btn.active { background: rgba(167, 139, 250, 0.2); border-color: #a78bfa; color: #e9d5ff; }
+  .btn {
+    width: 100%;
+    padding: 11px;
+    border-radius: 9px;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 7px;
+    font-family: inherit;
+    letter-spacing: 0.3px;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-primary { background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: white; box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25); }
+  .btn-primary:hover { box-shadow: 0 6px 16px rgba(56, 189, 248, 0.4); }
+  .btn-secondary { background: rgba(148, 163, 184, 0.1); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.2); }
+  .btn-secondary:hover { background: rgba(148, 163, 184, 0.18); }
+  .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25); }
+  .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25); }
+  .btn-hint { background: linear-gradient(135deg, #a78bfa, #7c3aed); color: white; box-shadow: 0 2px 8px rgba(167, 139, 250, 0.25); }
+  .btn.disabled { opacity: 0.4; cursor: not-allowed; }
+  .canvas-container {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 14px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  canvas {
+    background: #0a0f1e;
+    border-radius: 10px;
+    cursor: crosshair;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    touch-action: none;
+  }
+  .equation-overlay {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: #7dd3fc;
+    pointer-events: none;
+  }
+  .solved-badge {
+    position: absolute;
+    top: 62px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    color: white;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    pointer-events: none;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    animation: slideIn 0.3s ease-out;
+  }
+  .feedback-message {
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    line-height: 1.55;
+    animation: slideIn 0.3s ease-out;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  .feedback-correct { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); color: #a7f3d0; }
+  .feedback-incorrect { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); color: #fecaca; }
+  .feedback-info { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #bae6fd; }
+  .feedback-locked { background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.3); color: #cbd5e1; }
+  .feedback-title { font-weight: 800; font-size: 14px; margin-bottom: 6px; display: block; }
+  .math {
+    font-family: 'Courier New', monospace;
+    color: #fde68a;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 12.5px;
+    display: inline-block;
+    margin: 1px 0;
+  }
+  .hint-box {
+    padding: 12px 14px;
+    background: rgba(167, 139, 250, 0.1);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    border-radius: 10px;
+    font-size: 12.5px;
+    line-height: 1.65;
+    animation: slideIn 0.3s ease-out;
+  }
+  .hint-box .hint-title { font-weight: 700; color: #c4b5fd; margin-bottom: 6px; font-size: 13px; }
+  .selected-points { font-size: 12.5px; min-height: 30px; }
+  .point-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    border-radius: 6px;
+    margin: 3px 3px 3px 0;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #fde68a;
+    font-weight: 600;
+  }
+  .point-chip.snapped {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #a7f3d0;
+  }
+  .point-chip.nrr { background: rgba(245, 158, 11, 0.18); border-color: rgba(245, 158, 11, 0.5); color: #fcd34d; }
+  .empty-state { color: #64748b; font-style: italic; font-size: 12px; }
+  .legend {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-parabola { background: #38bdf8; }
+  .dot-selected { background: #fbbf24; }
+  .dot-correct { background: #10b981; }
+  .dot-symmetry { background: #a78bfa; }
+  .pulse { animation: pulse 0.6s ease-out; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); } 100% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); } }
+  @media (max-width: 1200px) {
+    .main { grid-template-columns: 1fr; }
+    canvas { max-height: 70vh; }
+  }
+</style>
 </head>
 <body>
-
-<div class="app-container">
-    <header>
-        <h1><span>⚡</span> Quadratic Graph & Roots Lab</h1>
-        <div class="score-board">
-            <div class="score-item">Score: <span id="scoreDisplay">0</span></div>
-            <div class="score-item">Streak: <span id="streakDisplay">0🔥</span></div>
-        </div>
-    </header>
-
-    <div class="main-layout">
-        <div class="canvas-section">
-            <div class="canvas-container">
-                <canvas id="graphCanvas" width="550" height="550"></canvas>
-                <div class="canvas-overlay-info">Grid Scale: 1 unit = 30px</div>
-            </div>
-        </div>
-
-        <div class="controls-section">
-            <div class="control-card">
-                <div class="card-title">Function Expression</div>
-                <div class="input-row">
-                    <span class="input-prefix">y =</span>
-                    <input type="text" id="equationInput" class="equation-input" value="x^2 - 4x + 3" placeholder="e.g. x^2 - 2x - 3">
-                </div>
-            </div>
-
-            <div class="control-card">
-                <div class="card-title">Objective Mode</div>
-                <div class="mode-toggle">
-                    <button class="mode-btn active" id="modeRootsBtn" onclick="setMode('roots')">Find Roots</button>
-                    <button class="mode-btn" id="modeVertexBtn" onclick="setMode('vertex')">Find Vertex</button>
-                </div>
-                <div class="selections-list" id="selectionStatus">
-                    Selected: None
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn btn-primary" onclick="checkAnswer()">Check Selection</button>
-                <button class="btn btn-danger" id="noRootsBtn" onclick="selectNoRealRoots()">No Real Roots</button>
-                <button class="btn btn-amber" onclick="toggleHint()">💡 Discriminant Hint</button>
-                <button class="btn btn-secondary" onclick="generateRandomProblem()">🎲 Random Problem</button>
-            </div>
-
-            <div id="hintBox" class="hint-box"></div>
-            <div id="feedbackBox" class="feedback-message"></div>
-        </div>
+<div class="app">
+  <header>
+    <div>
+      <h1>🎯 Quadratic Quest</h1>
+      <div class="subtitle">Master the parabola — roots, vertex, symmetry &amp; discriminant</div>
     </div>
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-label">Score</span>
+        <span class="stat-value score" id="score">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Streak</span>
+        <span class="stat-value streak" id="streak">0 🔥</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Best</span>
+        <span class="stat-value" id="best">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Time</span>
+        <span class="stat-value timer" id="timer">0:00</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="panel">
+      <h2>Equation</h2>
+      <div class="equation-input">
+        <span class="equation-prefix">y =</span>
+        <input type="text" id="equationInput" value="x^2 - 4x + 3" placeholder="e.g., x^2 - 4x + 3" autocomplete="off" spellcheck="false">
+      </div>
+
+      <h2>Challenge Mode</h2>
+      <div class="mode-selector">
+        <button class="mode-btn active" data-mode="root">🎯 Find Roots</button>
+        <button class="mode-btn" data-mode="vertex">📍 Find Vertex</button>
+      </div>
+
+      <h2>Difficulty</h2>
+      <div class="difficulty-selector">
+        <button class="diff-btn active" data-diff="easy">Easy</button>
+        <button class="diff-btn" data-diff="medium">Medium</button>
+        <button class="diff-btn" data-diff="hard">Hard</button>
+      </div>
+
+      <h2>Actions</h2>
+      <button class="btn btn-warning" id="noRealRootsBtn">∅ No Real Roots</button>
+      <button class="btn btn-hint" id="hintBtn">💡 Discriminant Hint</button>
+      <button class="btn btn-success" id="checkBtn">✓ Check Answer</button>
+      <button class="btn btn-primary" id="nextBtn">→ Next Problem</button>
+      <button class="btn btn-secondary" id="clearBtn">✕ Clear Selection</button>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot dot-parabola"></span>Parabola</div>
+        <div class="legend-item"><span class="legend-dot dot-selected"></span>Your pick</div>
+        <div class="legend-item"><span class="legend-dot dot-correct"></span>Correct</div>
+        <div class="legend-item"><span class="legend-dot dot-symmetry"></span>Symmetry</div>
+      </div>
+    </div>
+
+    <div class="canvas-container" id="canvasContainer">
+      <canvas id="graph" width="720" height="720"></canvas>
+      <div class="equation-overlay" id="equationOverlay">y = x² − 4x + 3</div>
+    </div>
+
+    <div class="panel">
+      <h2>Feedback</h2>
+      <div id="feedbackArea">
+        <div class="feedback-message feedback-info">
+          <span class="feedback-title">👋 Welcome, mathematician!</span>
+          Enter a quadratic equation above, or hit <b>Next Problem</b>. Then switch between <b>Root</b> and <b>Vertex</b> modes and click on the graph to mark your answer. Clicks near the true answer will <b>snap</b> to the exact value!
+        </div>
+      </div>
+
+      <h2>Discriminant Analysis</h2>
+      <div id="hintArea">
+        <div class="empty-state">Click "💡 Discriminant Hint" to reveal insights.</div>
+      </div>
+
+      <h2>Your Selections</h2>
+      <div class="selected-points" id="selectedPoints">
+        <span class="empty-state">None yet — click on the graph!</span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('graphCanvas');
-    const ctx = canvas.getContext('2d');
-    const eqInput = document.getElementById('equationInput');
-    const feedbackBox = document.getElementById('feedbackBox');
-    const hintBox = document.getElementById('hintBox');
-    const selectionStatus = document.getElementById('selectionStatus');
+/* ============================================================
+   QUADRATIC QUEST — Game Logic (with Snap-to-Answer)
+   ============================================================ */
 
-    let currentMode = 'roots'; // 'roots' or 'vertex'
-    let currentA = 1, currentB = -4, currentC = 3;
-    let selectedPoints = [];
-    let selectedNoRoots = false;
-    let hintLevel = 0;
-    let score = 0;
-    let streak = 0;
+const canvas = document.getElementById('graph');
+const ctx = canvas.getContext('2d');
+const equationInput = document.getElementById('equationInput');
+const equationOverlay = document.getElementById('equationOverlay');
+const canvasContainer = document.getElementById('canvasContainer');
+const feedbackArea = document.getElementById('feedbackArea');
+const hintArea = document.getElementById('hintArea');
+const selectedPointsDiv = document.getElementById('selectedPoints');
+const scoreEl = document.getElementById('score');
+const streakEl = document.getElementById('streak');
+const bestEl = document.getElementById('best');
+const timerEl = document.getElementById('timer');
+const noRealRootsBtn = document.getElementById('noRealRootsBtn');
+const hintBtn = document.getElementById('hintBtn');
+const checkBtn = document.getElementById('checkBtn');
+const nextBtn = document.getElementById('nextBtn');
+const clearBtn = document.getElementById('clearBtn');
 
-    const scale = 30; // 30 pixels per unit
-    const originX = canvas.width / 2;
-    const originY = canvas.height / 2;
+/* ---------- Snap configuration ---------- */
+const SNAP_TOLERANCE_PX = 50; // screen-pixel radius for snapping
 
-    function parseQuadratic(expr) {
-        let clean = expr.replace(/\s+/g, '').toLowerCase();
-        let a = 0, b = 0, c = 0;
+const state = {
+  a: 1, b: -4, c: 3,
+  mode: 'root',
+  difficulty: 'easy',
+  selectedPoints: [],       // each: { x, y, snapped: bool }
+  noRealRootsSelected: false,
+  score: 0,
+  streak: 0,
+  best: 0,
+  startTime: Date.now(),
+  hintLevel: 0,
+  view: { xMin: -5, xMax: 5, yMin: -5, yMax: 5 },
+  lastResult: null,
+  currentProblemScored: false,
+  snapAnimations: [],       // { sx, sy, startTime, color }
+};
 
-        // General parser logic for quadratic expressions in standard form
-        let x2Match = clean.match(/([+-]?\d*\.?\d*)?x\^2/);
-        if (x2Match) {
-            let coeff = x2Match[1];
-            if (coeff === '' || coeff === '+') a = 1;
-            else if (coeff === '-') a = -1;
-            else a = parseFloat(coeff);
-            clean = clean.replace(x2Match[0], '');
+/* ---------- Math helpers ---------- */
+const f = (x) => state.a * x * x + state.b * x + state.c;
+const discriminant = () => state.b * state.b - 4 * state.a * state.c;
+const vertex = () => {
+  const h = -state.b / (2 * state.a);
+  return { h, k: f(h) };
+};
+const roots = () => {
+  const D = discriminant();
+  if (D < -1e-9) return null;
+  if (Math.abs(D) < 1e-9) return [ -state.b / (2 * state.a) ];
+  const s = Math.sqrt(D);
+  const r1 = (-state.b - s) / (2 * state.a);
+  const r2 = (-state.b + s) / (2 * state.a);
+  return [ Math.min(r1, r2), Math.max(r1, r2) ];
+};
+
+/* ---------- Parser ---------- */
+function parseQuadratic(expr) {
+  let s = String(expr).replace(/\s+/g, '').toLowerCase();
+  s = s.replace(/x²/g, 'x^2').replace(/\*\*/g, '^');
+  if (!s) throw new Error('Empty expression');
+  let a = 0, b = 0, c = 0;
+  if (!s.startsWith('+') && !s.startsWith('-')) s = '+' + s;
+  const terms = s.match(/[+-][^+-]+/g) || [];
+  if (terms.length === 0) throw new Error('Could not parse');
+  for (let term of terms) {
+    if (term.includes('x^2')) {
+      let coeff = term.replace('x^2', '');
+      if (coeff === '+' || coeff === '') coeff = 1;
+      else if (coeff === '-') coeff = -1;
+      else { const n = parseFloat(coeff); if (isNaN(n)) throw new Error('Bad coeff'); coeff = n; }
+      a += coeff;
+    } else if (term.includes('x')) {
+      let coeff = term.replace('x', '');
+      if (coeff === '+' || coeff === '') coeff = 1;
+      else if (coeff === '-') coeff = -1;
+      else { const n = parseFloat(coeff); if (isNaN(n)) throw new Error('Bad coeff'); coeff = n; }
+      b += coeff;
+    } else {
+      const n = parseFloat(term);
+      if (isNaN(n)) throw new Error('Bad constant');
+      c += n;
+    }
+  }
+  if (Math.abs(a) < 1e-9) throw new Error('Not a quadratic (a = 0)');
+  return { a, b, c };
+}
+
+function formatEquation(a, b, c) {
+  const fmt = (n) => Number.isInteger(n) ? n.toString() : n.toFixed(2).replace(/\.?0+$/, '');
+  const parts = [];
+  if (a === 1) parts.push('x²');
+  else if (a === -1) parts.push('−x²');
+  else parts.push(fmt(a) + 'x²');
+  if (b !== 0) {
+    if (b === 1) parts.push('+ x');
+    else if (b === -1) parts.push('− x');
+    else if (b > 0) parts.push('+ ' + fmt(b) + 'x');
+    else parts.push('− ' + fmt(Math.abs(b)) + 'x');
+  }
+  if (c !== 0) {
+    if (c > 0) parts.push('+ ' + fmt(c));
+    else parts.push('− ' + fmt(Math.abs(c)));
+  }
+  return parts.join(' ').replace(/^\+\s*/, '');
+}
+
+function formatNum(n, digits = 2) {
+  if (Math.abs(n) < 1e-9) return '0';
+  if (Math.abs(n - Math.round(n)) < 1e-9) return Math.round(n).toString();
+  return n.toFixed(digits).replace(/\.?0+$/, '');
+}
+
+/* ---------- Random problem generator ---------- */
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randChoice(arr) { return arr[randInt(0, arr.length - 1)]; }
+
+function generateProblem(difficulty) {
+  const type = randChoice(['distinct', 'distinct', 'repeated', 'complex']);
+  if (type === 'distinct') {
+    if (difficulty === 'easy') {
+      const r1 = randInt(-5, 5);
+      let r2 = randInt(-5, 5);
+      while (r2 === r1) r2 = randInt(-5, 5);
+      const a = randChoice([1, 1, 1, -1]);
+      return { a, b: -a * (r1 + r2), c: a * r1 * r2 };
+    } else if (difficulty === 'medium') {
+      for (let tries = 0; tries < 30; tries++) {
+        const r1Num = randInt(-5, 5);
+        const r2 = randInt(-4, 4);
+        if (r1Num === 0) continue;
+        const a = randChoice([2, 2, -2]);
+        const bVal = -a * (r1Num / 2 + r2);
+        const cVal = a * (r1Num * r2 / 2);
+        if (Number.isInteger(bVal) && Number.isInteger(cVal) && Math.abs(bVal) <= 12 && Math.abs(cVal) <= 12) {
+          return { a, b: bVal, c: cVal };
         }
-
-        let xMatch = clean.match(/([+-]?\d*\.?\d*)?x/);
-        if (xMatch) {
-            let coeff = xMatch[1];
-            if (coeff === '' || coeff === '+') b = 1;
-            else if (coeff === '-') b = -1;
-            else b = parseFloat(coeff);
-            clean = clean.replace(xMatch[0], '');
+      }
+      return generateProblem('easy');
+    } else {
+      for (let tries = 0; tries < 100; tries++) {
+        const a = randChoice([1, -1, 2, -2]);
+        const b = randInt(-7, 7);
+        const c = randInt(-7, 7);
+        const D = b * b - 4 * a * c;
+        if (D > 0) {
+          const s = Math.sqrt(D);
+          if (Math.abs(s - Math.round(s)) > 1e-6) return { a, b, c };
         }
+      }
+      return { a: 1, b: 1, c: -1 };
+    }
+  } else if (type === 'repeated') {
+    const r = randInt(-4, 4);
+    const a = randChoice([1, 1, 2, -1]);
+    return { a, b: -2 * a * r, c: a * r * r };
+  } else {
+    for (let tries = 0; tries < 100; tries++) {
+      const a = randChoice([1, 1, 2, -1, -1]);
+      const b = randInt(-5, 5);
+      const c = randInt(-6, 6);
+      if (b * b - 4 * a * c < 0) return { a, b, c };
+    }
+    return { a: 1, b: 0, c: 1 };
+  }
+}
 
-        if (clean.length > 0) {
-            let constVal = parseFloat(clean);
-            if (!isNaN(constVal)) c = constVal;
+/* ---------- View computation ---------- */
+function computeView() {
+  const { a, b, c } = state;
+  const v = vertex();
+  const r = roots();
+  let xs = [v.h, 0];
+  let ys = [v.k, 0, c];
+  if (r) { xs.push(...r); ys.push(0, 0); }
+  let xMin = Math.min(...xs), xMax = Math.max(...xs);
+  let yMin = Math.min(...ys), yMax = Math.max(...ys);
+  const xPad = Math.max((xMax - xMin) * 0.6, 2.5);
+  xMin -= xPad; xMax += xPad;
+  const yAtXMin = f(xMin), yAtXMax = f(xMax);
+  yMin = Math.min(yMin, yAtXMin, yAtXMax);
+  yMax = Math.max(yMax, yAtXMin, yAtXMax);
+  const yPad = Math.max((yMax - yMin) * 0.25, 2);
+  yMin -= yPad; yMax += yPad;
+  const xRange = xMax - xMin, yRange = yMax - yMin;
+  if (xRange > yRange) {
+    const mid = (yMin + yMax) / 2;
+    yMin = mid - xRange / 2; yMax = mid + xRange / 2;
+  } else {
+    const mid = (xMin + xMax) / 2;
+    xMin = mid - yRange / 2; xMax = mid + yRange / 2;
+  }
+  state.view = { xMin, xMax, yMin, yMax };
+}
+
+/* ---------- Coordinate transforms ---------- */
+function worldToScreen(x, y) {
+  const { xMin, xMax, yMin, yMax } = state.view;
+  return {
+    sx: (x - xMin) / (xMax - xMin) * canvas.width,
+    sy: canvas.height - (y - yMin) / (yMax - yMin) * canvas.height
+  };
+}
+function screenToWorld(sx, sy) {
+  const { xMin, xMax, yMin, yMax } = state.view;
+  return {
+    x: xMin + sx / canvas.width * (xMax - xMin),
+    y: yMax - sy / canvas.height * (yMax - yMin)
+  };
+}
+
+/* ---------- Snap helpers ---------- */
+function screenDist(sx1, sy1, sx2, sy2) {
+  return Math.sqrt((sx1 - sx2) ** 2 + (sy1 - sy2) ** 2);
+}
+
+function addSnapAnimation(worldX, worldY, color) {
+  const { sx, sy } = worldToScreen(worldX, worldY);
+  state.snapAnimations.push({ sx, sy, startTime: performance.now(), color: color || '#10b981' });
+}
+
+/* ---------- Drawing ---------- */
+function niceStep(rough) {
+  const pow = Math.pow(10, Math.floor(Math.log10(rough)));
+  const norm = rough / pow;
+  let nice;
+  if (norm < 1.5) nice = 1;
+  else if (norm < 3) nice = 2;
+  else if (norm < 7) nice = 5;
+  else nice = 10;
+  return nice * pow;
+}
+
+function draw() {
+  const { xMin, xMax, yMin, yMax } = state.view;
+  const w = canvas.width, h = canvas.height;
+  const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w*0.7);
+  grad.addColorStop(0, '#0f172a');
+  grad.addColorStop(1, '#020617');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  const xRange = xMax - xMin;
+  const gridStep = niceStep(xRange / 10);
+
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
+  ctx.lineWidth = 1;
+  const xStart = Math.ceil(xMin / gridStep) * gridStep;
+  for (let x = xStart; x <= xMax + 1e-9; x += gridStep) {
+    const { sx } = worldToScreen(x, 0);
+    ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, h); ctx.stroke();
+  }
+  const yStart = Math.ceil(yMin / gridStep) * gridStep;
+  for (let y = yStart; y <= yMax + 1e-9; y += gridStep) {
+    const { sy } = worldToScreen(0, y);
+    ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(w, sy); ctx.stroke();
+  }
+
+  ctx.strokeStyle = 'rgba(226, 232, 240, 0.55)';
+  ctx.lineWidth = 1.5;
+  const origin = worldToScreen(0, 0);
+  if (yMin <= 0 && yMax >= 0) {
+    ctx.beginPath(); ctx.moveTo(0, origin.sy); ctx.lineTo(w, origin.sy); ctx.stroke();
+    ctx.fillStyle = 'rgba(226, 232, 240, 0.55)';
+    ctx.beginPath(); ctx.moveTo(w - 2, origin.sy); ctx.lineTo(w - 10, origin.sy - 4); ctx.lineTo(w - 10, origin.sy + 4); ctx.fill();
+  }
+  if (xMin <= 0 && xMax >= 0) {
+    ctx.beginPath(); ctx.moveTo(origin.sx, 0); ctx.lineTo(origin.sx, h); ctx.stroke();
+    ctx.fillStyle = 'rgba(226, 232, 240, 0.55)';
+    ctx.beginPath(); ctx.moveTo(origin.sx, 2); ctx.lineTo(origin.sx - 4, 10); ctx.lineTo(origin.sx + 4, 10); ctx.fill();
+  }
+
+  ctx.fillStyle = 'rgba(203, 213, 225, 0.7)';
+  ctx.font = '600 11px -apple-system, sans-serif';
+  const y0Screen = Math.max(14, Math.min(h - 4, origin.sy));
+  const x0Screen = Math.max(24, Math.min(w - 4, origin.sx));
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let x = xStart; x <= xMax + 1e-9; x += gridStep) {
+    if (Math.abs(x) < gridStep / 2) continue;
+    const { sx } = worldToScreen(x, 0);
+    if (sx < 18 || sx > w - 18) continue;
+    ctx.fillText(formatNum(x), sx, y0Screen + 4);
+  }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let y = yStart; y <= yMax + 1e-9; y += gridStep) {
+    if (Math.abs(y) < gridStep / 2) continue;
+    const { sy } = worldToScreen(0, y);
+    if (sy < 14 || sy > h - 14) continue;
+    ctx.fillText(formatNum(y), x0Screen - 5, sy);
+  }
+
+  // Axis of symmetry
+  const v = vertex();
+  const { sx: sxSym } = worldToScreen(v.h, 0);
+  if (sxSym > 0 && sxSym < w) {
+    ctx.strokeStyle = state.lastResult === 'correct' && state.mode === 'vertex'
+      ? 'rgba(167, 139, 250, 0.85)'
+      : 'rgba(167, 139, 250, 0.25)';
+    ctx.lineWidth = state.lastResult === 'correct' && state.mode === 'vertex' ? 2 : 1.2;
+    ctx.setLineDash([6, 5]);
+    ctx.beginPath(); ctx.moveTo(sxSym, 0); ctx.lineTo(sxSym, h); ctx.stroke();
+    ctx.setLineDash([]);
+    if (state.mode === 'vertex') {
+      ctx.fillStyle = 'rgba(196, 181, 253, 0.85)';
+      ctx.font = '600 11px -apple-system, sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('x = ' + formatNum(v.h), sxSym + 4, 10);
+    }
+  }
+
+  // Parabola
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = 'rgba(56, 189, 248, 0.5)';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  const steps = 500;
+  let started = false;
+  for (let i = 0; i <= steps; i++) {
+    const x = xMin + (xMax - xMin) * i / steps;
+    const y = f(x);
+    const { sx, sy } = worldToScreen(x, y);
+    if (sy < -200 || sy > h + 200) { started = false; continue; }
+    if (!started) { ctx.moveTo(sx, sy); started = true; }
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Selected points
+  for (const p of state.selectedPoints) {
+    const { sx, sy } = worldToScreen(p.x, p.y);
+    const isSnapped = p.snapped;
+    ctx.fillStyle = isSnapped ? '#10b981' : '#fbbf24';
+    ctx.strokeStyle = isSnapped ? '#a7f3d0' : '#fef3c7';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = isSnapped ? 'rgba(16, 185, 129, 0.7)' : 'rgba(251, 191, 36, 0.7)';
+    ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(sx, sy, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Draw coordinate label next to snapped points
+    if (isSnapped) {
+      ctx.fillStyle = 'rgba(167, 243, 208, 0.95)';
+      ctx.font = '700 11px "Courier New", monospace';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      const label = `(${formatNum(p.x)}, ${formatNum(p.y)})`;
+      const lx = sx + 14;
+      const ly = sy - 10;
+      // background pill
+      const tm = ctx.measureText(label);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+      ctx.beginPath();
+      ctx.roundRect(lx - 4, ly - 13, tm.width + 8, 17, 4);
+      ctx.fill();
+      ctx.fillStyle = '#a7f3d0';
+      ctx.fillText(label, lx, ly);
+    }
+  }
+
+  // Correct points (after check)
+  if (state.lastResult === 'correct') {
+    ctx.fillStyle = '#10b981';
+    ctx.strokeStyle = '#a7f3d0';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = 'rgba(16, 185, 129, 0.7)';
+    ctx.shadowBlur = 12;
+    if (state.mode === 'root') {
+      const r = roots();
+      if (r) for (const rx of r) {
+        const { sx, sy } = worldToScreen(rx, 0);
+        ctx.beginPath(); ctx.arc(sx, sy, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+    } else {
+      const { sx, sy } = worldToScreen(v.h, v.k);
+      ctx.beginPath(); ctx.arc(sx, sy, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  // Snap animations (expanding rings)
+  const now = performance.now();
+  state.snapAnimations = state.snapAnimations.filter(a => now - a.startTime < 700);
+  for (const a of state.snapAnimations) {
+    const t = (now - a.startTime) / 700; // 0 → 1
+    const radius = 8 + t * 35;
+    const alpha = 1 - t;
+    ctx.strokeStyle = a.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+    // handle hex colors
+    if (a.color.startsWith('#')) {
+      const r = parseInt(a.color.slice(1,3), 16);
+      const g = parseInt(a.color.slice(3,5), 16);
+      const b = parseInt(a.color.slice(5,7), 16);
+      ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
+    }
+    ctx.lineWidth = 2.5 * (1 - t);
+    ctx.beginPath(); ctx.arc(a.sx, a.sy, radius, 0, Math.PI * 2); ctx.stroke();
+
+    // "SNAPPED!" label fading out
+    if (t < 0.7) {
+      const labelAlpha = 1 - t / 0.7;
+      ctx.fillStyle = `rgba(167, 243, 208, ${labelAlpha})`;
+      ctx.font = '800 12px -apple-system, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText('🎯 SNAPPED!', a.sx, a.sy - 18 - t * 12);
+    }
+  }
+  if (state.snapAnimations.length > 0) requestAnimationFrame(draw);
+}
+
+/* ---------- UI updates ---------- */
+function updateEquationOverlay() {
+  equationOverlay.textContent = 'y = ' + formatEquation(state.a, state.b, state.c);
+}
+
+function updateSolvedBadge() {
+  const existing = canvasContainer.querySelector('.solved-badge');
+  if (existing) existing.remove();
+  if (state.currentProblemScored) {
+    const badge = document.createElement('div');
+    badge.className = 'solved-badge';
+    badge.textContent = '✓ Already Solved';
+    canvasContainer.appendChild(badge);
+  }
+}
+
+function updateSelectedPointsDisplay() {
+  if (state.noRealRootsSelected) {
+    selectedPointsDiv.innerHTML = '<span class="point-chip nrr">∅ No Real Roots</span>';
+    return;
+  }
+  if (state.selectedPoints.length === 0) {
+    selectedPointsDiv.innerHTML = '<span class="empty-state">None yet — click on the graph!</span>';
+    return;
+  }
+  selectedPointsDiv.innerHTML = state.selectedPoints.map(p => {
+    const cls = p.snapped ? 'point-chip snapped' : 'point-chip';
+    const prefix = p.snapped ? '🎯 ' : '';
+    return `<span class="${cls}">${prefix}(${formatNum(p.x)}, ${formatNum(p.y)})</span>`;
+  }).join('');
+}
+
+function updateStats() {
+  scoreEl.textContent = state.score;
+  streakEl.textContent = state.streak + ' 🔥';
+  bestEl.textContent = state.best;
+}
+
+function updateTimer() {
+  const secs = Math.floor((Date.now() - state.startTime) / 1000);
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+}
+setInterval(updateTimer, 1000);
+
+/* ---------- Feedback generation ---------- */
+function showFeedback(kind, html) {
+  feedbackArea.innerHTML = `<div class="feedback-message feedback-${kind}">${html}</div>`;
+}
+
+function generateCorrectFeedback() {
+  const D = discriminant();
+  const v = vertex();
+  const r = roots();
+  if (state.mode === 'root') {
+    if (D > 0) {
+      const [r1, r2] = r;
+      const dist = Math.sqrt(D) / (2 * Math.abs(state.a));
+      return `<span class="feedback-title">✨ Excellent!</span>
+        You found both roots at <span class="math">x = ${formatNum(r1)}</span> and <span class="math">x = ${formatNum(r2)}</span>.
+        Since <span class="math">Δ = b² − 4ac = ${formatNum(D)} &gt; 0</span>, the quadratic formula yields two distinct real solutions.
+        Notice the symmetry: each root is exactly <span class="math">√Δ / (2|a|) = ${formatNum(dist)}</span> away from the axis of symmetry <span class="math">x = ${formatNum(v.h)}</span>.`;
+    } else if (Math.abs(D) < 1e-9) {
+      const r1 = r[0];
+      return `<span class="feedback-title">✨ Perfect!</span>
+        The parabola just kisses the x-axis at <span class="math">x = ${formatNum(r1)}</span>.
+        Because <span class="math">Δ = 0</span>, the vertex <span class="math">(${formatNum(v.h)}, ${formatNum(v.k)})</span> sits exactly on the axis — a single tangent intersection.
+        The quadratic formula collapses to one repeated root: <span class="math">x = −b/(2a) = ${formatNum(r1)}</span>.`;
+    }
+  } else {
+    const kind = state.a > 0 ? 'minimum' : 'maximum';
+    return `<span class="feedback-title">✨ Great job!</span>
+      The vertex <span class="math">(${formatNum(v.h)}, ${formatNum(v.k)})</span> is the <b>${kind}</b> of the parabola.
+      Found via <span class="math">x = −b/(2a) = ${formatNum(v.h)}</span>, then <span class="math">y = f(x) = ${formatNum(v.k)}</span>.
+      This point lies on the axis of symmetry <span class="math">x = ${formatNum(v.h)}</span>, which splits the parabola into mirror-image halves.`;
+  }
+  const aboveBelow = state.a > 0 ? 'above' : 'below';
+  return `<span class="feedback-title">✨ Spot on!</span>
+    Since <span class="math">Δ = ${formatNum(D)} &lt; 0</span>, the expression under the square root in the quadratic formula is negative — no real solutions exist.
+    Geometrically, the parabola floats entirely <b>${aboveBelow}</b> the x-axis without ever crossing <span class="math">y = 0</span>.`;
+}
+
+function generateIncorrectFeedback() {
+  const D = discriminant();
+  const v = vertex();
+  const signWord = D > 0 ? 'positive' : (Math.abs(D) < 1e-9 ? 'zero' : 'negative');
+  if (state.mode === 'root') {
+    let visual = '';
+    if (D > 0) visual = `the parabola crosses the x-axis at two points`;
+    else if (Math.abs(D) < 1e-9) visual = `the parabola just touches the x-axis at one point`;
+    else visual = `the parabola never meets the x-axis`;
+    return `<span class="feedback-title">🤔 Not quite — let's think it through!</span>
+      The discriminant is <span class="math">Δ = b² − 4ac = ${formatNum(D)}</span>, which is <b>${signWord}</b>.
+      This means ${visual}.
+      ${D >= 0 ? `Remember: roots are symmetric about <span class="math">x = ${formatNum(v.h)}</span>. Try clicking on the x-axis where the blue curve crosses (or touches) it.` : `Since Δ &lt; 0, the correct move is the <b>∅ No Real Roots</b> button.`}`;
+  } else {
+    return `<span class="feedback-title">🤔 Almost there!</span>
+      The vertex formula is <span class="math">x = −b/(2a) = ${formatNum(v.h)}</span>, and <span class="math">y = f(x) = ${formatNum(v.k)}</span>.
+      So the vertex is <span class="math">(${formatNum(v.h)}, ${formatNum(v.k)})</span>.
+      Tip: the vertex is the turning point — the <b>${state.a > 0 ? 'lowest' : 'highest'}</b> point on the curve — and it always lies on the dashed purple line of symmetry.`;
+  }
+}
+
+/* ---------- Hint system ---------- */
+function updateHint() {
+  const D = discriminant();
+  const v = vertex();
+  if (state.hintLevel === 0) {
+    hintArea.innerHTML = '<div class="empty-state">Click "💡 Discriminant Hint" to reveal insights.</div>';
+    return;
+  }
+  let html = '';
+  if (state.hintLevel >= 1) {
+    const sign = D > 0 ? '&gt; 0' : (Math.abs(D) < 1e-9 ? '= 0' : '&lt; 0');
+    const meaning = D > 0
+      ? 'The parabola <b>crosses</b> the x-axis twice → two distinct real roots.'
+      : (Math.abs(D) < 1e-9
+        ? 'The parabola <b>touches</b> the x-axis once → one repeated root (the vertex lies on the axis).'
+        : 'The parabola <b>misses</b> the x-axis entirely → no real roots.');
+    html += `<div class="hint-box">
+      <div class="hint-title">📊 Level 1 — Sign of Δ</div>
+      <span class="math">Δ = ${formatNum(D)} ${sign}</span><br>
+      ${meaning}
+    </div>`;
+  }
+  if (state.hintLevel >= 2) {
+    html += `<div class="hint-box" style="margin-top:8px;">
+      <div class="hint-title">🧮 Level 2 — Full Work</div>
+      <span class="math">Δ = b² − 4ac</span><br>
+      <span class="math">Δ = (${formatNum(state.b)})² − 4(${formatNum(state.a)})(${formatNum(state.c)})</span><br>
+      <span class="math">Δ = ${formatNum(state.b*state.b)} − ${formatNum(4*state.a*state.c)} = ${formatNum(D)}</span><br><br>
+      <b>Quadratic formula:</b><br>
+      <span class="math">x = (−b ± √Δ) / (2a)</span><br>
+      <span class="math">x = (${formatNum(-state.b)} ± √${formatNum(D)}) / ${formatNum(2*state.a)}</span><br><br>
+      <b>Vertex:</b> <span class="math">x = −b/(2a) = ${formatNum(v.h)}</span>, <span class="math">y = ${formatNum(v.k)}</span>
+    </div>`;
+  }
+  hintArea.innerHTML = html;
+  hintBtn.textContent = state.hintLevel === 1 ? '💡 Show Full Work (2/2)' : (state.hintLevel === 2 ? '💡 Hide Hints' : '💡 Discriminant Hint');
+}
+
+/* ---------- Checking logic ---------- */
+function checkAnswer() {
+  if (state.currentProblemScored) {
+    showFeedback('locked', `<span class="feedback-title">🔒 Already scored for this problem</span>
+      You've already earned points for this equation in <b>${state.mode === 'root' ? 'Root' : 'Vertex'} Mode</b>.
+      Click <b>→ Next Problem</b> for a fresh challenge, or switch modes to tackle the other question for this parabola.`);
+    return;
+  }
+
+  const D = discriminant();
+  const v = vertex();
+  const r = roots();
+  const tolerance = (state.view.xMax - state.view.xMin) * 0.035;
+  let correct = false;
+
+  if (state.mode === 'root') {
+    if (D < -1e-9) {
+      correct = state.noRealRootsSelected && state.selectedPoints.length === 0;
+    } else if (Math.abs(D) < 1e-9) {
+      if (state.selectedPoints.length === 1 && !state.noRealRootsSelected) {
+        const p = state.selectedPoints[0];
+        correct = Math.abs(p.x - r[0]) < tolerance && Math.abs(p.y) < tolerance * 2;
+      }
+    } else {
+      if (state.selectedPoints.length === 2 && !state.noRealRootsSelected) {
+        const xs = state.selectedPoints.map(p => p.x).sort((a, b) => a - b);
+        const onAxis = state.selectedPoints.every(p => Math.abs(p.y) < tolerance * 2);
+        correct = onAxis &&
+          Math.abs(xs[0] - r[0]) < tolerance &&
+          Math.abs(xs[1] - r[1]) < tolerance;
+      }
+    }
+  } else {
+    if (state.selectedPoints.length === 1 && !state.noRealRootsSelected) {
+      const p = state.selectedPoints[0];
+      correct = Math.abs(p.x - v.h) < tolerance && Math.abs(p.y - v.k) < tolerance;
+    }
+  }
+
+  if (correct) {
+    state.lastResult = 'correct';
+    state.streak += 1;
+    const multiplier = state.streak < 3 ? 1 : (state.streak < 6 ? 2 : 3);
+    const basePoints = state.difficulty === 'easy' ? 10 : (state.difficulty === 'medium' ? 15 : 25);
+    const hintPenalty = state.hintLevel * 2;
+    const gained = Math.max(1, basePoints * multiplier - hintPenalty);
+    state.score += gained;
+    if (state.score > state.best) state.best = state.score;
+    state.currentProblemScored = true;
+    updateSolvedBadge();
+    showFeedback('correct', generateCorrectFeedback() + `<br><br><span class="math">+${gained} pts</span> (×${multiplier} streak${state.hintLevel > 0 ? `, −${hintPenalty} hint` : ''})`);
+    canvas.classList.remove('pulse'); void canvas.offsetWidth; canvas.classList.add('pulse');
+  } else {
+    state.lastResult = 'incorrect';
+    state.streak = 0;
+    showFeedback('incorrect', generateIncorrectFeedback());
+  }
+  updateStats();
+  draw();
+}
+
+/* ---------- Event handlers ---------- */
+function handleCanvasClick(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const sx = (clientX - rect.left) * scaleX;
+  const sy = (clientY - rect.top) * scaleY;
+  const { x, y } = screenToWorld(sx, sy);
+
+  state.lastResult = null;
+
+  if (state.mode === 'root') {
+    const origin = worldToScreen(0, 0);
+    const distToAxis = Math.abs(sy - origin.sy);
+    if (distToAxis < 35) {
+      let finalX = x;
+      let snapped = false;
+
+      // --- SNAP LOGIC: check proximity to actual roots ---
+      const r = roots();
+      if (r) {
+        let bestDist = Infinity;
+        let bestRoot = null;
+        for (const root of r) {
+          const rootScreen = worldToScreen(root, 0);
+          const d = Math.abs(sx - rootScreen.sx);
+          if (d < SNAP_TOLERANCE_PX && d < bestDist) {
+            bestDist = d;
+            bestRoot = root;
+          }
         }
-
-        return { a, b, c };
-    }
-
-    function toScreenX(x) { return originX + x * scale; }
-    function toScreenY(y) { return originY - y * scale; }
-    function toMathX(px) { return (px - originX) / scale; }
-    function toMathY(py) { return (originY - py) / scale; }
-
-    function drawGrid() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 1;
-
-        // Draw grid lines
-        for (let x = 0; x < canvas.width; x += scale) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, canvas.height);
-            ctx.stroke();
+        if (bestRoot !== null) {
+          finalX = bestRoot;
+          snapped = true;
+          addSnapAnimation(bestRoot, 0, '#10b981');
         }
-        for (let y = 0; y < canvas.height; y += scale) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(canvas.width, y);
-            ctx.stroke();
-        }
+      }
 
-        // Draw Axes
-        ctx.strokeStyle = '#475569';
-        ctx.lineWidth = 2;
+      // Toggle: if clicking near an existing point, remove it
+      const tol = (state.view.xMax - state.view.xMin) * 0.03;
+      const existingIdx = state.selectedPoints.findIndex(p => Math.abs(p.x - finalX) < tol);
+      if (existingIdx >= 0) {
+        state.selectedPoints.splice(existingIdx, 1);
+      } else {
+        state.selectedPoints.push({ x: finalX, y: 0, snapped });
+      }
+      state.noRealRootsSelected = false;
+    } else {
+      showFeedback('info', `<span class="feedback-title">🎯 Aim for the x-axis!</span>Roots live where <span class="math">y = 0</span>. Click near the horizontal axis to mark a candidate root.`);
+      return;
+    }
+  } else {
+    // --- VERTEX MODE with SNAP ---
+    let finalX = x, finalY = y;
+    let snapped = false;
 
-        ctx.beginPath();
-        ctx.moveTo(0, originY);
-        ctx.lineTo(canvas.width, originY);
-        ctx.stroke();
+    const v = vertex();
+    const vScreen = worldToScreen(v.h, v.k);
+    const dist = screenDist(sx, sy, vScreen.sx, vScreen.sy);
 
-        ctx.beginPath();
-        ctx.moveTo(originX, 0);
-        ctx.lineTo(originX, canvas.height);
-        ctx.stroke();
-
-        // Ticks and Labels
-        ctx.fillStyle = '#64748b';
-        ctx.font = '10px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-
-        for (let x = -8; x <= 8; x++) {
-            if (x === 0) continue;
-            let px = toScreenX(x);
-            ctx.fillText(x.toString(), px, originY + 4);
-        }
-
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
-        for (let y = -8; y <= 8; y++) {
-            if (y === 0) continue;
-            let py = toScreenY(y);
-            ctx.fillText(y.toString(), originX - 6, py);
-        }
+    if (dist < SNAP_TOLERANCE_PX) {
+      finalX = v.h;
+      finalY = v.k;
+      snapped = true;
+      addSnapAnimation(v.h, v.k, '#a78bfa');
     }
 
-    function drawGraph() {
-        drawGrid();
+    state.selectedPoints = [{ x: finalX, y: finalY, snapped }];
+    state.noRealRootsSelected = false;
+  }
+  updateSelectedPointsDisplay();
+  draw();
+}
 
-        if (currentA === 0) return; // Not a quadratic function
+canvas.addEventListener('click', (e) => handleCanvasClick(e.clientX, e.clientY));
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (e.touches.length > 0) handleCanvasClick(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: false });
 
-        // Draw parabola
-        ctx.beginPath();
-        ctx.strokeStyle = '#2563eb';
-        ctx.lineWidth = 2.5;
+function applyNewEquation(a, b, c) {
+  state.a = a; state.b = b; state.c = c;
+  state.selectedPoints = [];
+  state.noRealRootsSelected = false;
+  state.lastResult = null;
+  state.hintLevel = 0;
+  state.currentProblemScored = false;
+  state.snapAnimations = [];
+  noRealRootsBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+  computeView();
+  updateEquationOverlay();
+  updateSelectedPointsDisplay();
+  updateHint();
+  updateSolvedBadge();
+  draw();
+}
 
-        let first = true;
-        for (let px = 0; px <= canvas.width; px += 2) {
-            let x = toMathX(px);
-            let y = currentA * x * x + currentB * x + currentC;
-            let py = toScreenY(y);
-
-            if (first) {
-                ctx.moveTo(px, py);
-                first = false;
-            } else {
-                ctx.lineTo(px, py);
-            }
-        }
-        ctx.stroke();
-
-        // Draw user points
-        selectedPoints.forEach((pt, index) => {
-            let px = toScreenX(pt.x);
-            let py = toScreenY(pt.y);
-
-            ctx.beginPath();
-            ctx.arc(px, py, 7, 0, Math.PI * 2);
-            ctx.fillStyle = currentMode === 'roots' ? '#10b981' : '#8b5cf6';
-            ctx.fill();
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        });
+let parseTimeout;
+equationInput.addEventListener('input', () => {
+  clearTimeout(parseTimeout);
+  parseTimeout = setTimeout(() => {
+    try {
+      const { a, b, c } = parseQuadratic(equationInput.value);
+      applyNewEquation(a, b, c);
+      equationInput.style.color = '#f1f5f9';
+    } catch (err) {
+      equationInput.style.color = '#fca5a5';
     }
-
-    function updateParams() {
-        let { a, b, c } = parseQuadratic(eqInput.value);
-        currentA = a;
-        currentB = b;
-        currentC = c;
-        drawGraph();
+  }, 300);
+});
+equationInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    try {
+      const { a, b, c } = parseQuadratic(equationInput.value);
+      applyNewEquation(a, b, c);
+      equationInput.style.color = '#f1f5f9';
+    } catch (err) {
+      equationInput.style.color = '#fca5a5';
+      showFeedback('incorrect', `<span class="feedback-title">⚠️ Couldn't parse that</span>${err.message}. Try formats like <span class="math">x^2 - 4x + 3</span>, <span class="math">2x^2 + 4</span>, or <span class="math">-x^2 + 2x + 3</span>.`);
     }
+  }
+});
 
-    function setMode(mode) {
-        currentMode = mode;
-        selectedPoints = [];
-        selectedNoRoots = false;
-        document.getElementById('modeRootsBtn').classList.toggle('active', mode === 'roots');
-        document.getElementById('modeVertexBtn').classList.toggle('active', mode === 'vertex');
-        document.getElementById('noRootsBtn').style.display = mode === 'roots' ? 'block' : 'none';
-        updateSelectionStatus();
-        hideFeedback();
-        drawGraph();
-    }
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.mode = btn.dataset.mode;
+    state.selectedPoints = [];
+    state.noRealRootsSelected = false;
+    state.lastResult = null;
+    state.currentProblemScored = false;
+    state.snapAnimations = [];
+    noRealRootsBtn.style.display = state.mode === 'root' ? 'block' : 'none';
+    noRealRootsBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+    updateSelectedPointsDisplay();
+    updateSolvedBadge();
+    draw();
+    showFeedback('info', state.mode === 'root'
+      ? `<span class="feedback-title">🎯 Root Mode</span>Click on the <b>x-axis</b> where the parabola crosses (or touches) it. Clicks near the true root will <b>snap</b> to the exact value! If the parabola never meets the x-axis, press <b>∅ No Real Roots</b>.`
+      : `<span class="feedback-title">📍 Vertex Mode</span>Click the <b>turning point</b> of the parabola. Clicks near the true vertex will <b>snap</b> to the exact coordinates!`);
+  });
+});
 
-    canvas.addEventListener('click', function(e) {
-        const rect = canvas.getBoundingClientRect();
-        const px = e.clientX - rect.left;
-        const py = e.clientY - rect.top;
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.difficulty = btn.dataset.diff;
+  });
+});
 
-        let mathX = Math.round(toMathX(px) * 2) / 2; // Snap to nearest 0.5
-        let mathY = Math.round(toMathY(py) * 2) / 2;
+noRealRootsBtn.addEventListener('click', () => {
+  if (state.mode !== 'root') return;
+  state.noRealRootsSelected = !state.noRealRootsSelected;
+  if (state.noRealRootsSelected) state.selectedPoints = [];
+  state.lastResult = null;
+  noRealRootsBtn.style.background = state.noRealRootsSelected
+    ? 'linear-gradient(135deg, #fbbf24, #f59e0b)'
+    : 'linear-gradient(135deg, #f59e0b, #d97706)';
+  updateSelectedPointsDisplay();
+  draw();
+});
 
-        if (currentMode === 'roots') {
-            // Snap to x-axis for root selection
-            mathY = 0;
-            if (selectedPoints.length >= 2) selectedPoints.shift();
-            selectedPoints.push({ x: mathX, y: mathY });
-            selectedNoRoots = false;
-        } else {
-            // Single point for vertex
-            selectedPoints = [{ x: mathX, y: mathY }];
-        }
+hintBtn.addEventListener('click', () => {
+  state.hintLevel = (state.hintLevel + 1) % 3;
+  updateHint();
+});
 
-        updateSelectionStatus();
-        drawGraph();
-    });
+checkBtn.addEventListener('click', checkAnswer);
 
-    function selectNoRealRoots() {
-        selectedPoints = [];
-        selectedNoRoots = true;
-        updateSelectionStatus();
-    }
+nextBtn.addEventListener('click', () => {
+  const prob = generateProblem(state.difficulty);
+  applyNewEquation(prob.a, prob.b, prob.c);
+  equationInput.value = formatEquation(state.a, state.b, state.c).replace(/−/g, '-').replace(/²/g, '^2');
+  showFeedback('info', `<span class="feedback-title">🎲 New challenge!</span>
+    Here's <span class="math">y = ${formatEquation(state.a, state.b, state.c)}</span>.
+    ${state.mode === 'root' ? 'Find the <b>roots</b> (x-intercepts) — or declare <b>No Real Roots</b> if the parabola misses the x-axis.' : 'Find the <b>vertex</b> — the turning point of the parabola.'}
+    Clicks close to the true answer will <b>snap</b> to the exact value!`);
+});
 
-    function updateSelectionStatus() {
-        if (selectedNoRoots) {
-            selectionStatus.innerHTML = 'Selected: <span class="tag">No Real Roots</span>';
-        } else if (selectedPoints.length === 0) {
-            selectionStatus.innerHTML = 'Selected: None';
-        } else {
-            let tags = selectedPoints.map(p => `<span class="tag">(${p.x}, ${p.y})</span>`).join(' ');
-            selectionStatus.innerHTML = `Selected: ${tags}`;
-        }
-    }
+clearBtn.addEventListener('click', () => {
+  state.selectedPoints = [];
+  state.noRealRootsSelected = false;
+  state.lastResult = null;
+  state.snapAnimations = [];
+  noRealRootsBtn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+  updateSelectedPointsDisplay();
+  draw();
+});
 
-    function toggleHint() {
-        let disc = currentB * currentB - 4 * currentA * currentC;
-        hintLevel = (hintLevel + 1) % 3;
-
-        if (hintLevel === 0) {
-            hintBox.style.display = 'none';
-        } else if (hintLevel === 1) {
-            hintBox.style.display = 'flex';
-            let status = disc > 0 ? "positive (Δ > 0). The curve crosses the x-axis twice!" :
-                         disc === 0 ? "zero (Δ = 0). The curve touches the x-axis at exactly 1 point!" :
-                         "negative (Δ < 0). The curve does not touch or cross the x-axis!";
-            hintBox.innerHTML = `<strong>Hint 1 (Sign of Discriminant):</strong> The discriminant is ${status}`;
-        } else {
-            hintBox.style.display = 'flex';
-            hintBox.innerHTML = `<strong>Hint 2 (Formula Breakdown):</strong> Δ = b² - 4ac = (${currentB})² - 4(${currentA})(${currentC}) = <strong>${disc}</strong>`;
-        }
-    }
-
-    function checkAnswer() {
-        let disc = currentB * currentB - 4 * currentA * currentC;
-
-        if (currentMode === 'roots') {
-            if (disc < 0) {
-                if (selectedNoRoots) {
-                    showFeedback(true, "🎉 Excellent! The discriminant Δ < 0, meaning there are no real x-intercepts. 'No Real Roots' is correct!");
-                    awardPoints();
-                } else {
-                    showFeedback(false, "Not quite! Look at the graph—it floats without crossing y = 0. Since Δ < 0, click 'No Real Roots'!");
-                    resetStreak();
-                }
-            } else if (disc === 0) {
-                let trueRoot = -currentB / (2 * currentA);
-                if (selectedPoints.length === 1 && Math.abs(selectedPoints[0].x - trueRoot) < 0.25) {
-                    showFeedback(true, `🎉 Spot on! The discriminant Δ = 0, so there is exactly 1 repeated root at x = ${trueRoot}.`);
-                    awardPoints();
-                } else {
-                    showFeedback(false, `Close! Since Δ = 0, the parabola touches the x-axis at a single point x = ${trueRoot}. Mark that point!`);
-                    resetStreak();
-                }
-            } else { // disc > 0
-                let root1 = (-currentB - Math.sqrt(disc)) / (2 * currentA);
-                let root2 = (-currentB + Math.sqrt(disc)) / (2 * currentA);
-                let sortedTrue = [root1, root2].sort((a,b)=>a-b);
-
-                if (selectedPoints.length === 2) {
-                    let userRoots = selectedPoints.map(p => p.x).sort((a,b)=>a-b);
-                    let err1 = Math.abs(userRoots[0] - sortedTrue[0]);
-                    let err2 = Math.abs(userRoots[1] - sortedTrue[1]);
-
-                    if (err1 < 0.4 && err2 < 0.4) {
-                        showFeedback(true, `🎉 Great job! The function has two distinct real roots at x = ${sortedTrue[0].toFixed(1)} and x = ${sortedTrue[1].toFixed(1)}.`);
-                        awardPoints();
-                    } else {
-                        showFeedback(false, `Almost there! Check where the curve crosses the horizontal line y = 0. The true roots are near ${sortedTrue[0].toFixed(1)} and ${sortedTrue[1].toFixed(1)}.`);
-                        resetStreak();
-                    }
-                } else {
-                    showFeedback(false, "Since Δ > 0, there are 2 real roots! Click both points where the curve crosses the x-axis.");
-                    resetStreak();
-                }
-            }
-        } else { // Vertex Mode
-            let trueVx = -currentB / (2 * currentA);
-            let trueVy = currentA * trueVx * trueVx + currentB * trueVx + currentC;
-
-            if (selectedPoints.length === 1) {
-                let userX = selectedPoints[0].x;
-                let userY = selectedPoints[0].y;
-
-                if (Math.abs(userX - trueVx) < 0.4 && Math.abs(userY - trueVy) < 0.4) {
-                    showFeedback(true, `🎉 Perfect! The vertex is at (${trueVx.toFixed(1)}, ${trueVy.toFixed(1)}). The line of symmetry is x = ${trueVx.toFixed(1)}.`);
-                    awardPoints();
-                } else {
-                    showFeedback(false, `Not quite. Remember the vertex x-coordinate is given by x = -b/(2a) = ${trueVx.toFixed(1)}. Try again!`);
-                    resetStreak();
-                }
-            } else {
-                showFeedback(false, "Please click on the plot to select the turning point (vertex) of the parabola!");
-                resetStreak();
-            }
-        }
-    }
-
-    function showFeedback(isSuccess, msg) {
-        feedbackBox.style.display = 'block';
-        feedbackBox.className = `feedback-message ${isSuccess ? 'success' : 'error'}`;
-        feedbackBox.innerHTML = msg;
-    }
-
-    function hideFeedback() {
-        feedbackBox.style.display = 'none';
-        hintBox.style.display = 'none';
-        hintLevel = 0;
-    }
-
-    function awardPoints() {
-        score += 10 + streak * 2;
-        streak += 1;
-        document.getElementById('scoreDisplay').innerText = score;
-        document.getElementById('streakDisplay').innerText = streak + '🔥';
-    }
-
-    function resetStreak() {
-        streak = 0;
-        document.getElementById('streakDisplay').innerText = '0🔥';
-    }
-
-    function generateRandomProblem() {
-        let type = Math.floor(Math.random() * 3); // 0: 2 roots, 1: 1 root, 2: 0 roots
-        let a = Math.random() < 0.5 ? 1 : -1;
-        let b = 0, c = 0;
-
-        if (type === 0) { // 2 distinct integer roots
-            let r1 = Math.floor(Math.random() * 7) - 3;
-            let r2 = r1;
-            while (r2 === r1) r2 = Math.floor(Math.random() * 7) - 3;
-            b = -a * (r1 + r2);
-            c = a * (r1 * r2);
-        } else if (type === 1) { // 1 repeated root
-            let r = Math.floor(Math.random() * 5) - 2;
-            b = -2 * a * r;
-            c = a * r * r;
-        } else { // No real roots
-            let h = Math.floor(Math.random() * 5) - 2;
-            let k = (a === 1) ? Math.floor(Math.random() * 3) + 1 : -(Math.floor(Math.random() * 3) + 1);
-            b = -2 * a * h;
-            c = a * h * h + k;
-        }
-
-        // Format nicely
-        let expr = "";
-        if (a === 1) expr += "x^2";
-        else if (a === -1) expr += "-x^2";
-        else expr += `${a}x^2`;
-
-        if (b > 0) expr += ` + ${b === 1 ? '' : b}x`;
-        else if (b < 0) expr += ` - ${Math.abs(b) === 1 ? '' : Math.abs(b)}x`;
-
-        if (c > 0) expr += ` + ${c}`;
-        else if (c < 0) expr += ` - ${Math.abs(c)}`;
-
-        eqInput.value = expr;
-        selectedPoints = [];
-        selectedNoRoots = false;
-        updateParams();
-        updateSelectionStatus();
-        hideFeedback();
-    }
-
-    eqInput.addEventListener('input', () => {
-        selectedPoints = [];
-        selectedNoRoots = false;
-        updateParams();
-        updateSelectionStatus();
-        hideFeedback();
-    });
-
-    // Initial load
-    updateParams();
+/* ---------- Initialization ---------- */
+function init() {
+  computeView();
+  updateEquationOverlay();
+  updateSelectedPointsDisplay();
+  updateHint();
+  updateStats();
+  updateSolvedBadge();
+  draw();
+}
+init();
 </script>
 </body>
 </html>
