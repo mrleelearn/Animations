@@ -1,5 +1,5 @@
 # List of Math Animations
-Click on any animation below to view it:
+Click on any animations below to view it:
 
 ## Centres of Circles Animations
 - [Incentre](incentre_animation.html)
@@ -18,6 +18,9 @@ Click on any animation below to view it:
 
 ## Quadratic Inequalities
 - [Graphical Method](quadratic_inequalities_userinput.html)
+
+## Quadratic Functions
+- [Quadratic Game](quadratic_game.html)
 
 ## Solving Equations
 - [Quadratic](animate_subject_sub_quadratic.html)
