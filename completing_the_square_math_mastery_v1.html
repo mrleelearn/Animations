@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completing the Square Math Mastery</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- KaTeX Math Rendering Library -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .math-input {
+            font-family: 'Fira Code', monospace;
+        }
+        .katex-display {
+            margin: 0.5em 0 !important;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        
+        /* Print styles for worksheet generator */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printableWorksheetArea, #printableWorksheetArea * {
+                visibility: visible;
+            }
+            #printableWorksheetArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                color: black !important;
+                padding: 20px;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .katex {
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg sm:text-xl bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
+                        Completing The Square
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium hidden sm:block">Master Quadratic Vertex Form <i>a</i>(<i>x</i> - <i>h</i>)² + <i>k</i></p>
+                </div>
+            </div>
+
+            <!-- Mode Navigation Tabs -->
+            <nav class="hidden md:flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
+                <button onclick="switchTab('guided')" id="tab-guided" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow">
+                    Guided Practice
+                </button>
+                <button onclick="switchTab('timed')" id="tab-timed" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all duration-200">
+                    Timed Challenge ⚡
+                </button>
+                <button onclick="switchTab('visual')" id="tab-visual" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all duration-200">
+                    Visual Algebra Tiles 📐
+                </button>
+                <button onclick="switchTab('teacher')" id="tab-teacher" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all duration-200">
+                    Teacher Sandbox 👨‍🏫
+                </button>
+            </nav>
+
+            <!-- Utility Controls (Sound, Stats, Mobile Menu) -->
+            <div class="flex items-center gap-2">
+                <!-- Sound Toggle -->
+                <button id="soundToggleBtn" onclick="toggleSound()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition" title="Toggle Sound">
+                    <svg id="soundOnIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                    </svg>
+                    <svg id="soundOffIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+                    </svg>
+                </button>
+
+                <!-- High Score Badge -->
+                <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
+                    <span>🏆 Score:</span>
+                    <span id="globalScoreText">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Sub-bar -->
+        <div class="md:hidden flex border-t border-slate-800 bg-slate-900 px-2 py-1.5 justify-around text-xs font-medium overflow-x-auto">
+            <button onclick="switchTab('guided')" id="mob-tab-guided" class="px-2.5 py-1 rounded-md bg-indigo-600 text-white">Guided</button>
+            <button onclick="switchTab('timed')" id="mob-tab-timed" class="px-2.5 py-1 rounded-md text-slate-400">Timed ⚡</button>
+            <button onclick="switchTab('visual')" id="mob-tab-visual" class="px-2.5 py-1 rounded-md text-slate-400">Visual 📐</button>
+            <button onclick="switchTab('teacher')" id="mob-tab-teacher" class="px-2.5 py-1 rounded-md text-slate-400">Teacher 👨‍🏫</button>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- TAB 1: GUIDED PRACTICE MODE -->
+        <section id="guidedMode" class="tab-content space-y-6">
+            <!-- Level Selector Header Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span>Guided Practice</span>
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">Step-by-Step Learning</span>
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">Select a level to practice converting standard quadratic expressions <i>ax</i>² + <i>bx</i> + <i>c</i> into vertex form <i>a</i>(<i>x</i> - <i>h</i>)² + <i>k</i>.</p>
+                </div>
+
+                <!-- Level Selector Buttons -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="setGuidedLevel(1)" id="levelBtn1" class="level-btn px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition bg-emerald-500/20 border-emerald-500/40 text-emerald-300">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        Level 1 (a = 1)
+                    </button>
+                    <button onclick="setGuidedLevel(2)" id="levelBtn2" class="level-btn px-3 py-2 rounded-xl border border-slate-800 bg-slate-800/50 text-slate-400 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                        <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                        Level 2 (a &gt; 1)
+                    </button>
+                    <button onclick="setGuidedLevel(3)" id="levelBtn3" class="level-btn px-3 py-2 rounded-xl border border-slate-800 bg-slate-800/50 text-slate-400 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                        <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                        Level 3 (a &lt; 1)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
+                    <div class="text-xs text-slate-400 font-medium">Level Stats</div>
+                    <div class="text-lg font-bold text-white mt-0.5" id="levelNameBadge">Level 1 (Basic)</div>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
+                    <div class="text-xs text-slate-400 font-medium">Solved Correctly</div>
+                    <div class="text-lg font-bold text-emerald-400 mt-0.5" id="guidedSolvedCount">0</div>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
+                    <div class="text-xs text-slate-400 font-medium">Current Streak</div>
+                    <div class="text-lg font-bold text-amber-400 mt-0.5" id="guidedStreak">0 🔥</div>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
+                    <div class="text-xs text-slate-400 font-medium">Accuracy</div>
+                    <div class="text-lg font-bold text-indigo-400 mt-0.5" id="guidedAccuracy">100%</div>
+                </div>
+            </div>
+
+            <!-- Main Interactive Practice Workspace Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+                <!-- Background Accent Glow -->
+                <div class="absolute -top-24 -right-24 w-60 h-60 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="max-w-3xl mx-auto space-y-8">
+                    <!-- Target Expression Display -->
+                    <div class="text-center space-y-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+                            Target Expression
+                        </span>
+                        <div class="py-4 px-6 rounded-2xl bg-slate-950/80 border border-slate-800 shadow-inner flex items-center justify-center min-h-[90px]">
+                            <div id="targetProblemMath" class="text-2xl sm:text-3xl text-indigo-200">
+                                <!-- KaTeX rendered expression -->
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-400">Express this quadratic in vertex form: <span class="font-mono text-indigo-300">a(x - h)² + k</span></p>
+                    </div>
+
+                    <!-- Interactive Inputs Form -->
+                    <div class="bg-slate-950/50 p-6 rounded-2xl border border-slate-800/80 space-y-6">
+                        <label class="block text-xs font-bold uppercase text-slate-400 text-center tracking-wider">
+                            Enter Your Parameters (a, h, and k)
+                        </label>
+                        
+                        <div class="flex flex-wrap items-center justify-center gap-3 text-lg sm:text-xl font-bold font-mono">
+                            <!-- Input 'a' -->
+                            <div class="flex flex-col items-center gap-1">
+                                <input type="text" id="inputA" placeholder="a" oninput="updateLivePreview()"
+                                    class="math-input w-16 sm:w-20 px-3 py-2 text-center rounded-xl bg-slate-900 border-2 border-slate-700 text-indigo-300 focus:border-indigo-500 focus:outline-none transition font-semibold text-base sm:text-lg">
+                                <span class="text-[10px] text-slate-500 font-sans">Factor a</span>
+                            </div>
+
+                            <span class="text-slate-400">( x -</span>
+
+                            <!-- Input 'h' -->
+                            <div class="flex flex-col items-center gap-1">
+                                <input type="text" id="inputH" placeholder="h" oninput="updateLivePreview()"
+                                    class="math-input w-20 sm:w-24 px-3 py-2 text-center rounded-xl bg-slate-900 border-2 border-slate-700 text-emerald-300 focus:border-emerald-500 focus:outline-none transition font-semibold text-base sm:text-lg">
+                                <span class="text-[10px] text-slate-500 font-sans">Shift h</span>
+                            </div>
+
+                            <span class="text-slate-400">)² +</span>
+
+                            <!-- Input 'k' -->
+                            <div class="flex flex-col items-center gap-1">
+                                <input type="text" id="inputK" placeholder="k" oninput="updateLivePreview()"
+                                    class="math-input w-20 sm:w-24 px-3 py-2 text-center rounded-xl bg-slate-900 border-2 border-slate-700 text-amber-300 focus:border-amber-500 focus:outline-none transition font-semibold text-base sm:text-lg">
+                                <span class="text-[10px] text-slate-500 font-sans">Constant k</span>
+                            </div>
+                        </div>
+
+                        <!-- Live Equation Preview -->
+                        <div class="pt-3 border-t border-slate-800 text-center space-y-1">
+                            <span class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Your Live Equation Preview</span>
+                            <div id="livePreviewMath" class="text-lg text-slate-300 h-8 flex items-center justify-center font-mono">
+                                <!-- Dynamic equation -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <button id="checkGuidedBtn" onclick="checkGuidedAnswer()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+                            <span>Check Answer</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </button>
+
+                        <button onclick="toggleStepBreakdown()" id="breakdownToggleBtn" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-semibold text-sm transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                            <span>Show Step-by-Step Explanation</span>
+                        </button>
+
+                        <button onclick="nextGuidedProblem()" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-semibold text-sm transition flex items-center justify-center gap-2">
+                            <span>Next Question</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Feedback Alert Message -->
+                    <div id="guidedFeedback" class="hidden p-4 rounded-xl border text-sm font-medium transition-all"></div>
+
+                    <!-- Expandable Step-by-Step Breakdown Drawer (Hidden by default) -->
+                    <div id="stepBreakdownDrawer" class="hidden bg-slate-950 rounded-2xl border border-indigo-500/30 p-6 space-y-6 text-slate-300">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="font-bold text-white text-base flex items-center gap-2">
+                                <span class="p-1 rounded bg-amber-500/20 text-amber-300">💡</span>
+                                Step-by-Step Algebraic Breakdown
+                            </h3>
+                            <span class="text-xs text-indigo-400 font-mono">Formula: a(x - h)² + k</span>
+                        </div>
+
+                        <div id="stepBreakdownContent" class="space-y-4 text-xs sm:text-sm">
+                            <!-- Dynamically generated solution steps rendered via JS & KaTeX -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: TIMED CHALLENGE MODE -->
+        <section id="timedMode" class="tab-content hidden space-y-6">
+            <!-- Timed Setup Header -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span>Timed Challenge Mode</span>
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium">Speed & Precision</span>
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">Test your speed! Solve as many quadratic completions as possible before the timer runs out.</p>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <select id="challengeTimerSelect" class="bg-slate-800 border border-slate-700 text-white text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none">
+                        <option value="60">60 Seconds Sprint</option>
+                        <option value="120">120 Seconds Challenge</option>
+                        <option value="30">30 Seconds Speed Run</option>
+                    </select>
+
+                    <button id="startChallengeBtn" onclick="startTimedChallenge()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition transform active:scale-95">
+                        Start Game ⚡
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Timed Challenge Arena -->
+            <div id="timedArena" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
+                <!-- Timer Progress Bar -->
+                <div class="space-y-2 mb-6">
+                    <div class="flex justify-between items-center text-xs font-semibold">
+                        <span class="text-slate-400">Time Remaining</span>
+                        <span id="timeLeftText" class="text-amber-400 font-mono text-base">60s</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden">
+                        <div id="timerBar" class="bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 h-full w-full transition-all duration-1000"></div>
+                    </div>
+                </div>
+
+                <!-- Live Game Metrics Header -->
+                <div class="grid grid-cols-3 gap-4 mb-8 text-center">
+                    <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-xl">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Current Score</div>
+                        <div id="timedCurrentScore" class="text-2xl font-extrabold text-amber-400 font-mono">0</div>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-xl">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Combo Streak</div>
+                        <div id="timedCurrentStreak" class="text-2xl font-extrabold text-orange-400 font-mono">0 🔥</div>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-xl">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Score Multiplier</div>
+                        <div id="timedCurrentMultiplier" class="text-2xl font-extrabold text-indigo-400 font-mono">1.0x</div>
+                    </div>
+                </div>
+
+                <!-- Timed Question Box -->
+                <div class="max-w-xl mx-auto space-y-6">
+                    <div class="py-4 px-6 rounded-2xl bg-slate-950 border border-slate-800 text-center shadow-inner min-h-[90px] flex items-center justify-center">
+                        <div id="timedProblemMath" class="text-2xl sm:text-3xl text-indigo-200">
+                            Click "Start Game" to Begin!
+                        </div>
+                    </div>
+
+                    <!-- Timed Inputs -->
+                    <div class="flex items-center justify-center gap-2 text-base sm:text-lg font-bold font-mono">
+                        <input type="text" id="timedInputA" placeholder="a" disabled
+                            class="math-input w-16 px-2 py-2 text-center rounded-xl bg-slate-950 border border-slate-700 text-indigo-300 focus:border-indigo-500 focus:outline-none">
+                        <span class="text-slate-400">(x -</span>
+                        <input type="text" id="timedInputH" placeholder="h" disabled
+                            class="math-input w-20 px-2 py-2 text-center rounded-xl bg-slate-950 border border-slate-700 text-emerald-300 focus:border-emerald-500 focus:outline-none">
+                        <span class="text-slate-400 me-1">)² +</span>
+                        <input type="text" id="timedInputK" placeholder="k" disabled
+                            class="math-input w-20 px-2 py-2 text-center rounded-xl bg-slate-950 border border-slate-700 text-amber-300 focus:border-amber-500 focus:outline-none">
+                    </div>
+
+                    <div class="text-center">
+                        <button id="timedSubmitBtn" onclick="submitTimedAnswer()" disabled class="px-8 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition disabled:opacity-50">
+                            Submit Answer ↵
+                        </button>
+                    </div>
+
+                    <div id="timedFeedback" class="text-center text-sm font-semibold h-6"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: VISUAL GEOMETRIC HELPER MODE -->
+        <section id="visualMode" class="tab-content hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span>Visual Algebra Tiles Diagram</span>
+                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">Geometric Proof</span>
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-400 mt-1">See why "Completing the Square" literally builds a physical square! Adjust parameters to watch the geometric rearrangement.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Visual Controls Panel -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                    <h3 class="font-bold text-white text-sm border-b border-slate-800 pb-2">Geometric Parameters</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-300 mb-1">
+                                <span>Side Length x</span>
+                                <span id="visualValX" class="font-mono text-indigo-400">4</span>
+                            </div>
+                            <input type="range" id="sliderX" min="2" max="6" value="4" step="1" oninput="renderVisualDiagram()" class="w-full accent-indigo-500">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-300 mb-1">
+                                <span>Linear Term (2h)</span>
+                                <span id="visualValB" class="font-mono text-emerald-400">6</span>
+                            </div>
+                            <input type="range" id="sliderB" min="2" max="10" value="6" step="2" oninput="renderVisualDiagram()" class="w-full accent-emerald-500">
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Animation Wizard Controls -->
+                    <div class="space-y-3 pt-4 border-t border-slate-800">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Animation Step</span>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button onclick="setVisualStep(1)" id="vStep1" class="v-step-btn px-3 py-2 rounded-xl text-left text-xs font-medium bg-indigo-600 text-white">1. Initial Expression x² - 2hx</button>
+                            <button onclick="setVisualStep(2)" id="vStep2" class="v-step-btn px-3 py-2 rounded-xl text-left text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">2. Split linear term into two equal halves (-hx)</button>
+                            <button onclick="setVisualStep(3)" id="vStep3" class="v-step-btn px-3 py-2 rounded-xl text-left text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">3. Rearrange into L-Shape</button>
+                            <button onclick="setVisualStep(4)" id="vStep4" class="v-step-btn px-3 py-2 rounded-xl text-left text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">4. Identify Missing Corner h²</button>
+                            <button onclick="setVisualStep(5)" id="vStep5" class="v-step-btn px-3 py-2 rounded-xl text-left text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">5. Complete Square (x - h)² - h²</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive SVG Algebra Tile Canvas -->
+                <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between items-center min-h-[400px]">
+                    <!-- Step Caption Header -->
+                    <div id="visualStepCaption" class="w-full text-center text-sm font-semibold text-indigo-300 bg-indigo-500/10 p-3 rounded-xl border border-indigo-500/20">
+                        Step 1: Original terms represented as areas.
+                    </div>
+
+                    <!-- SVG Canvas -->
+                    <div class="w-full flex justify-center items-center py-6">
+                        <svg id="algebraTilesSvg" class="w-full max-w-md h-72 border border-slate-800 rounded-xl bg-slate-950 p-4" viewBox="0 0 300 300">
+                            <!-- SVG Tiles rendered via JS -->
+                        </svg>
+                    </div>
+
+                    <!-- Dynamic Math Formula Badge -->
+                    <div id="visualMathFormula" class="text-center text-base sm:text-lg font-mono text-slate-200">
+                        <!-- Formula rendered via KaTeX -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: TEACHER SANDBOX & DEMO MODE -->
+        <section id="teacherMode" class="tab-content hidden space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span>Teacher Sandbox & Demo Mode</span>
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-medium">Smartboard & Worksheet Generator</span>
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">Enter custom coefficients a, b, c to generate live smartboard solutions or create printable practice worksheets for your class.</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleSmartboardView()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        Smartboard Mode
+                    </button>
+                    <button onclick="openWorksheetModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                        </svg>
+                        Print Practice Sheet
+                    </button>
+                </div>
+            </div>
+
+            <!-- Custom Input Sandbox Card -->
+            <div id="sandboxMainContainer" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-8 shadow-2xl">
+                <!-- Inputs for custom a, b, c -->
+                <div class="max-w-xl mx-auto space-y-4">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Enter Quadratic Coefficients</label>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1 text-center font-mono">Coefficient 'a'</label>
+                            <input type="number" id="sandboxA" value="2" step="1" oninput="calculateSandboxSolution()" class="w-full text-center py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-indigo-300 font-bold font-mono focus:border-indigo-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1 text-center font-mono">Coefficient 'b'</label>
+                            <input type="number" id="sandboxB" value="-12" step="1" oninput="calculateSandboxSolution()" class="w-full text-center py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-emerald-300 font-bold font-mono focus:border-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-400 mb-1 text-center font-mono">Constant 'c'</label>
+                            <input type="number" id="sandboxC" value="5" step="1" oninput="calculateSandboxSolution()" class="w-full text-center py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-amber-300 font-bold font-mono focus:border-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Solution Output -->
+                <div class="space-y-6 pt-4 border-t border-slate-800">
+                    <div class="text-center space-y-2">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Converted Vertex Form</span>
+                        <div id="sandboxResultMath" class="text-3xl text-indigo-300 font-mono py-3"></div>
+                    </div>
+
+                    <!-- Sandbox Explanation Toggle Button -->
+                    <div class="flex justify-center">
+                        <button onclick="toggleSandboxBreakdown()" id="sandboxBreakdownToggleBtn" class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-semibold text-xs transition flex items-center gap-2">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                            <span>Show Step-by-Step Explanation</span>
+                        </button>
+                    </div>
+
+                    <!-- Sandbox Explanation Drawer (Hidden by default) -->
+                    <div id="sandboxBreakdownDrawer" class="hidden bg-slate-950 rounded-2xl p-6 border border-slate-800 space-y-4">
+                        <h4 class="font-bold text-white text-sm flex items-center gap-2">
+                            <span>📝 Full Smartboard Explanation</span>
+                        </h4>
+                        <div id="sandboxBreakdownContent" class="space-y-3 text-sm text-slate-300"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Printable Practice Sheet Modal -->
+    <div id="worksheetModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-6 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white">Generate Practice Worksheet</h3>
+                <button onclick="closeWorksheetModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+
+            <div class="space-y-4 text-xs sm:text-sm">
+                <div>
+                    <label class="block text-slate-300 font-medium mb-1">Worksheet Title</label>
+                    <input type="text" id="wsTitleInput" value="Completing the Square Practice Sheet" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-slate-300 font-medium mb-1">Number of Questions</label>
+                        <select id="wsCountSelect" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+                            <option value="6">6 Questions</option>
+                            <option value="10" selected>10 Questions</option>
+                            <option value="12">12 Questions</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-300 font-medium mb-1">Difficulty Mix</label>
+                        <select id="wsLevelSelect" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+                            <option value="mixed">Mixed (Levels 1, 2, 3)</option>
+                            <option value="level1">Level 1 Only (a = 1)</option>
+                            <option value="level2">Level 2 Only (a &gt; 1)</option>
+                            <option value="level3">Level 3 Only (a &lt; 1)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                <button onclick="closeWorksheetModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-semibold text-xs">Cancel</button>
+                <button onclick="generateAndPrintWorksheet()" class="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30">Generate & Print 🖨️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Container for Printable Sheet Output -->
+    <div id="printableWorksheetArea" class="hidden"></div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 bg-slate-900/50 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>Completing the Square Math Mastery &bull; Standard to Vertex Form Transformer</span>
+            <span>Formula: <i>a</i>(<i>x</i> - <i>h</i>)² + <i>k</i> where <i>h</i> = -<i>b</i> / 2<i>a</i> and <i>k</i> = <i>c</i> - <i>b</i>² / 4<i>a</i></span>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Global Application State
+        const state = {
+            activeTab: 'guided',
+            guidedLevel: 1, // 1: a=1, 2: a>1, 3: a<1
+            guidedProblem: null,
+            guidedSolvedCount: 0,
+            guidedStreak: 0,
+            guidedTotalAttempts: 0,
+            
+            // Timed Challenge State
+            timedActive: false,
+            timedTimer: null,
+            timeLeft: 60,
+            timedScore: 0,
+            timedStreak: 0,
+            timedMultiplier: 1.0,
+            timedProblem: null,
+
+            // Visual Diagram State
+            visualStep: 1,
+
+            // Teacher Sandbox State
+            smartboardMode: false
+        };
+
+        // Web Audio API Sound Engine
+        class SoundEngine {
+            constructor() {
+                this.muted = false;
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+            }
+            playCorrect() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gain.gain.setValueAtTime(0.12, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.25);
+                });
+            }
+            playIncorrect() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.exponentialRampToValueAtTime(110, now + 0.2);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            }
+        }
+        const soundEngine = new SoundEngine();
+
+        function toggleSound() {
+            soundEngine.muted = !soundEngine.muted;
+            document.getElementById('soundOnIcon').classList.toggle('hidden', soundEngine.muted);
+            document.getElementById('soundOffIcon').classList.toggle('hidden', !soundEngine.muted);
+        }
+
+        // Utility: Parse Fraction or Floating point input (e.g., "-3/2", "1.5", "4")
+        function parseMathInput(str) {
+            if (!str) return NaN;
+            str = str.trim().replace(/\s+/g, '');
+            if (str.includes('/')) {
+                const parts = str.split('/');
+                if (parts.length === 2) {
+                    const num = parseFloat(parts[0]);
+                    const den = parseFloat(parts[1]);
+                    if (!isNaN(num) && !isNaN(den) && den !== 0) {
+                        return num / den;
+                    }
+                }
+                return NaN;
+            }
+            return parseFloat(str);
+        }
+
+        // GCD helper for fraction reduction
+        function gcd(a, b) {
+            return b === 0 ? a : gcd(b, a % b);
+        }
+
+        // Formats number to LaTeX representation (e.g. 2.5 -> \frac{5}{2})
+        function toTexFraction(val) {
+            if (Math.abs(val - Math.round(val)) < 0.0001) {
+                return Math.round(val).toString();
+            }
+            for (let d = 2; d <= 32; d++) {
+                let n = val * d;
+                if (Math.abs(n - Math.round(n)) < 0.0001) {
+                    let num = Math.round(n);
+                    let den = d;
+                    let g = gcd(Math.abs(num), den);
+                    num /= g;
+                    den /= g;
+                    if (den === 1) return num.toString();
+                    if (num < 0) return `-\\frac{${Math.abs(num)}}{${den}}`;
+                    return `\\frac{${num}}{${den}}`;
+                }
+            }
+            return val.toFixed(2);
+        }
+
+        // Helper to render KaTeX into HTML element safely
+        function renderMath(latex, elementId, displayMode = true) {
+            const el = typeof elementId === 'string' ? document.getElementById(elementId) : elementId;
+            if (!el) return;
+            try {
+                if (window.katex) {
+                    window.katex.render(latex, el, {
+                        throwOnError: false,
+                        displayMode: displayMode
+                    });
+                } else {
+                    el.textContent = latex;
+                }
+            } catch (err) {
+                el.textContent = latex;
+            }
+        }
+
+        // Generate Standard Form LaTeX String: ax^2 + bx + c
+        function formatStandardTex(a, b, c) {
+            let res = '';
+            // a x^2
+            if (a === 1) res += 'x^2';
+            else if (a === -1) res += '-x^2';
+            else res += `${a}x^2`;
+
+            // b x
+            if (b > 0) {
+                res += b === 1 ? ' + x' : ` + ${b}x`;
+            } else if (b < 0) {
+                res += b === -1 ? ' - x' : ` - ${Math.abs(b)}x`;
+            }
+
+            // c
+            if (c > 0) res += ` + ${c}`;
+            else if (c < 0) res += ` - ${Math.abs(c)}`;
+
+            return res;
+        }
+
+        // Format Vertex Form LaTeX String: a(x - h)^2 + k
+        function formatVertexTex(a, h, k) {
+            let res = '';
+            // a
+            if (a === 1) res += '';
+            else if (a === -1) res += '-';
+            else res += `${a}`;
+
+            // (x - h)^2
+            if (Math.abs(h) < 0.0001) {
+                res += 'x^2';
+            } else if (h < 0) {
+                res += `\\left(x + ${toTexFraction(Math.abs(h))}\\right)^2`;
+            } else {
+                res += `\\left(x - ${toTexFraction(h)}\\right)^2`;
+            }
+
+            // k
+            if (Math.abs(k) > 0.0001) {
+                if (k > 0) res += ` + ${toTexFraction(k)}`;
+                else res += ` - ${toTexFraction(Math.abs(k))}`;
+            }
+
+            return res;
+        }
+
+        // Problem Generator Logic for standard vertex form a(x - h)^2 + k
+        function generateProblem(level) {
+            let a, b, c;
+            if (level === 1) {
+                a = 1;
+                if (Math.random() < 0.65) {
+                    const evens = [-10, -8, -6, -4, -2, 2, 4, 6, 8, 10];
+                    b = evens[Math.floor(Math.random() * evens.length)];
+                } else {
+                    const odds = [-7, -5, -3, -1, 1, 3, 5, 7];
+                    b = odds[Math.floor(Math.random() * odds.length)];
+                }
+                c = Math.floor(Math.random() * 21) - 10;
+            } else if (level === 2) {
+                const aVals = [2, 3, 4, 5];
+                a = aVals[Math.floor(Math.random() * aVals.length)];
+                if (Math.random() < 0.7) {
+                    const mult = (Math.floor(Math.random() * 8) - 4) || 2;
+                    b = a * mult * 2;
+                } else {
+                    b = Math.floor(Math.random() * 16) - 8;
+                    if (b === 0) b = 4;
+                }
+                c = Math.floor(Math.random() * 21) - 10;
+            } else {
+                const aVals = [-1, -2, -3, -4];
+                a = aVals[Math.floor(Math.random() * aVals.length)];
+                if (Math.random() < 0.7) {
+                    const mult = (Math.floor(Math.random() * 8) - 4) || -2;
+                    b = a * mult * 2;
+                } else {
+                    b = Math.floor(Math.random() * 16) - 8;
+                    if (b === 0) b = -4;
+                }
+                c = Math.floor(Math.random() * 21) - 10;
+            }
+
+            // For a(x - h)^2 + k: h = -b / (2a)
+            const h = -b / (2 * a);
+            const k = c - a * (h * h);
+
+            return { a, b, c, h, k, level };
+        }
+
+        // Generate Step-by-Step Explanation HTML for a(x - h)^2 + k
+        function generateStepBreakdownHTML(prob) {
+            const { a, b, c, h, k } = prob;
+            const b_over_a = b / a;
+            const hSq = h * h;
+
+            let html = `
+                <div class="space-y-4 font-sans">
+                    <!-- Step 1 -->
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                        <span class="font-bold text-indigo-400">Step 1: Identify Parameters & Factor Out a</span>
+                        <p class="text-xs text-slate-400 mt-1">
+                            For $ax^2 + bx + c$, factor $a = ${a}$ out of the first two terms:
+                        </p>
+                        <div class="my-2 p-2 bg-slate-950 rounded text-center text-indigo-200">
+                            $${formatStandardTex(a, b, c)} = ${a === 1 ? formatStandardTex(a, b, c) : `${a}\\left(x^2 ${b_over_a >= 0 ? '+ ' + toTexFraction(b_over_a) : '- ' + toTexFraction(Math.abs(b_over_a))}x\\right)${c >= 0 ? '+ ' + c : '- ' + Math.abs(c)}`}$
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                        <span class="font-bold text-emerald-400">Step 2: Find Vertex Shift h & Square It</span>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Calculate $h = -\\frac{b}{2a}$:
+                        </p>
+                        <div class="my-2 p-2 bg-slate-950 rounded text-center text-emerald-200">
+                            $h = -\\frac{${b}}{2(${a})} = ${toTexFraction(h)}$
+                        </div>
+                        <p class="text-xs text-slate-400">Squaring $h$ gives: $h^2 = \\left(${toTexFraction(h)}\\right)^2 = ${toTexFraction(hSq)}$</p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                        <span class="font-bold text-amber-400">Step 3: Add & Subtract Inside the Bracket</span>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Add and subtract $h^2 = ${toTexFraction(hSq)}$ inside to complete the square:
+                        </p>
+                        <div class="my-2 p-2 bg-slate-950 rounded text-center text-amber-200">
+                            $${a === 1 ? `\\left(x^2 ${b >= 0 ? '+' : ''}${b}x + ${toTexFraction(hSq)} -${toTexFraction(hSq)}\\right) ${c >= 0 ? '+' : ''}${c}` : `${a}\\left(x^2 ${b_over_a >= 0 ? '+' : ''}${toTexFraction(b_over_a)}x + ${toTexFraction(hSq)} -${toTexFraction(hSq)}\\right) ${c >= 0 ? '+' : ''}${c}`}$
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                        <span class="font-bold text-purple-400">Step 4: Collapse to $(x - h)^2$ & Simplify Constant $k$</span>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Factor the perfect square trinomial into $(x - h)^2$ and distribute $a$ to the subtracted constant:
+                        </p>
+                        <div class="my-2 p-2 bg-slate-950 rounded text-center text-purple-200">
+                            $${formatVertexTex(a, h, k)}$
+                        </div>
+                        <p class="text-xs text-slate-300 font-mono text-center mt-1">
+                            Final Parameters: $a = ${a}$, $h = ${toTexFraction(h)}$, $k = ${toTexFraction(k)}$
+                        </p>
+                    </div>
+                </div>
+            `;
+            return html;
+        }
+
+        // Load Guided Practice Problem
+        function loadGuidedProblem() {
+            state.guidedProblem = generateProblem(state.guidedLevel);
+            
+            // Render target problem math
+            renderMath(formatStandardTex(state.guidedProblem.a, state.guidedProblem.b, state.guidedProblem.c), 'targetProblemMath');
+            
+            // Reset inputs & re-enable
+            const inA = document.getElementById('inputA');
+            const inH = document.getElementById('inputH');
+            const inK = document.getElementById('inputK');
+            const checkBtn = document.getElementById('checkGuidedBtn');
+
+            inA.value = '';
+            inH.value = '';
+            inK.value = '';
+
+            inA.disabled = false;
+            inH.disabled = false;
+            inK.disabled = false;
+            checkBtn.disabled = false;
+
+            checkBtn.classList.remove('opacity-50', 'pointer-events-none');
+            inA.classList.remove('opacity-50');
+            inH.classList.remove('opacity-50');
+            inK.classList.remove('opacity-50');
+
+            // Hide feedback & breakdown by default
+            document.getElementById('guidedFeedback').classList.add('hidden');
+            document.getElementById('stepBreakdownDrawer').classList.add('hidden');
+
+            updateLivePreview();
+        }
+
+        // Live Equation Preview as user types
+        function updateLivePreview() {
+            const userA = parseMathInput(document.getElementById('inputA').value);
+            const userH = parseMathInput(document.getElementById('inputH').value);
+            const userK = parseMathInput(document.getElementById('inputK').value);
+
+            const aVal = isNaN(userA) ? 1 : userA;
+            const hVal = isNaN(userH) ? 0 : userH;
+            const kVal = isNaN(userK) ? 0 : userK;
+
+            const previewTex = formatVertexTex(aVal, hVal, kVal);
+            renderMath(previewTex, 'livePreviewMath', false);
+        }
+
+        // Check Guided Answer
+        function checkGuidedAnswer() {
+            const userA = parseMathInput(document.getElementById('inputA').value);
+            const userH = parseMathInput(document.getElementById('inputH').value);
+            const userK = parseMathInput(document.getElementById('inputK').value);
+
+            const feedbackEl = document.getElementById('guidedFeedback');
+            feedbackEl.classList.remove('hidden', 'bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-300', 'bg-rose-500/10', 'border-rose-500/30', 'text-rose-300');
+
+            if (isNaN(userA) || isNaN(userH) || isNaN(userK)) {
+                feedbackEl.classList.add('bg-rose-500/10', 'border-rose-500/30', 'text-rose-300');
+                feedbackEl.innerHTML = '⚠️ Please enter valid numeric values or fractions (e.g., 2, -1.5, or -3/2) for a, h, and k.';
+                soundEngine.playIncorrect();
+                return;
+            }
+
+            state.guidedTotalAttempts++;
+            const target = state.guidedProblem;
+
+            const matchesA = Math.abs(userA - target.a) < 0.001;
+            const matchesH = Math.abs(userH - target.h) < 0.001;
+            const matchesK = Math.abs(userK - target.k) < 0.001;
+
+            if (matchesA && matchesH && matchesK) {
+                // Correct
+                soundEngine.playCorrect();
+                state.guidedSolvedCount++;
+                state.guidedStreak++;
+                updateGlobalScore(100);
+
+                feedbackEl.classList.add('bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-300');
+                feedbackEl.innerHTML = `🎉 <strong>Excellent Job!</strong> Correct vertex form: $${formatVertexTex(target.a, target.h, target.k)}$.`;
+                renderMathInElement(feedbackEl);
+
+                // Mute/Disable Check Answer button and input fields upon correct verification
+                const inA = document.getElementById('inputA');
+                const inH = document.getElementById('inputH');
+                const inK = document.getElementById('inputK');
+                const checkBtn = document.getElementById('checkGuidedBtn');
+
+                inA.disabled = true;
+                inH.disabled = true;
+                inK.disabled = true;
+                checkBtn.disabled = true;
+
+                checkBtn.classList.add('opacity-50', 'pointer-events-none');
+                inA.classList.add('opacity-50');
+                inH.classList.add('opacity-50');
+                inK.classList.add('opacity-50');
+            } else {
+                // Incorrect
+                soundEngine.playIncorrect();
+                state.guidedStreak = 0;
+
+                feedbackEl.classList.add('bg-rose-500/10', 'border-rose-500/30', 'text-rose-300');
+                let hint = '❌ Not quite. ';
+                if (!matchesA) hint += 'Check a (factor out a first). ';
+                if (!matchesH) hint += 'Check h = -\\frac{b}{2a}. ';
+                if (!matchesK) hint += 'Check k = c - a\\cdot h^2. ';
+                
+                feedbackEl.innerHTML = hint;
+                renderMathInElement(feedbackEl);
+            }
+
+            updateGuidedStatsUI();
+        }
+
+        function updateGuidedStatsUI() {
+            document.getElementById('guidedSolvedCount').textContent = state.guidedSolvedCount;
+            document.getElementById('guidedStreak').textContent = `${state.guidedStreak} 🔥`;
+            const acc = state.guidedTotalAttempts > 0 ? Math.round((state.guidedSolvedCount / state.guidedTotalAttempts) * 100) : 100;
+            document.getElementById('guidedAccuracy').textContent = `${acc}%`;
+        }
+
+        function setGuidedLevel(lvl) {
+            state.guidedLevel = lvl;
+            [1, 2, 3].forEach(i => {
+                const btn = document.getElementById(`levelBtn${i}`);
+                if (i === lvl) {
+                    btn.className = "level-btn px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition bg-indigo-500/20 border-indigo-500/40 text-indigo-300";
+                } else {
+                    btn.className = "level-btn px-3 py-2 rounded-xl border border-slate-800 bg-slate-800/50 text-slate-400 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition";
+                }
+            });
+
+            const names = { 1: "Level 1 (a = 1)", 2: "Level 2 (a > 1)", 3: "Level 3 (a < 1)" };
+            document.getElementById('levelNameBadge').textContent = names[lvl];
+            loadGuidedProblem();
+        }
+
+        function toggleStepBreakdown() {
+            const drawer = document.getElementById('stepBreakdownDrawer');
+            drawer.classList.toggle('hidden');
+            if (!drawer.classList.contains('hidden')) {
+                const contentEl = document.getElementById('stepBreakdownContent');
+                contentEl.innerHTML = generateStepBreakdownHTML(state.guidedProblem);
+                renderMathInElement(contentEl);
+            }
+        }
+
+        function toggleSandboxBreakdown() {
+            const drawer = document.getElementById('sandboxBreakdownDrawer');
+            drawer.classList.toggle('hidden');
+            if (!drawer.classList.contains('hidden')) {
+                calculateSandboxSolution();
+            }
+        }
+
+        function nextGuidedProblem() {
+            loadGuidedProblem();
+        }
+
+        // Timed Challenge Mode Implementation
+        function startTimedChallenge() {
+            state.timedActive = true;
+            state.timedScore = 0;
+            state.timedStreak = 0;
+            state.timedMultiplier = 1.0;
+            state.timeLeft = parseInt(document.getElementById('challengeTimerSelect').value) || 60;
+
+            document.getElementById('startChallengeBtn').disabled = true;
+            document.getElementById('timedInputA').disabled = false;
+            document.getElementById('timedInputH').disabled = false;
+            document.getElementById('timedInputK').disabled = false;
+            document.getElementById('timedSubmitBtn').disabled = false;
+
+            updateTimedUI();
+            loadTimedProblem();
+
+            if (state.timedTimer) clearInterval(state.timedTimer);
+            state.timedTimer = setInterval(() => {
+                state.timeLeft--;
+                updateTimedUI();
+                if (state.timeLeft <= 0) {
+                    endTimedChallenge();
+                }
+            }, 1000);
+        }
+
+        function loadTimedProblem() {
+            const randLvl = Math.floor(Math.random() * 3) + 1;
+            state.timedProblem = generateProblem(randLvl);
+            renderMath(formatStandardTex(state.timedProblem.a, state.timedProblem.b, state.timedProblem.c), 'timedProblemMath');
+
+            document.getElementById('timedInputA').value = '';
+            document.getElementById('timedInputH').value = '';
+            document.getElementById('timedInputK').value = '';
+            document.getElementById('timedInputA').focus();
+        }
+
+        function submitTimedAnswer() {
+            if (!state.timedActive) return;
+
+            const userA = parseMathInput(document.getElementById('timedInputA').value);
+            const userH = parseMathInput(document.getElementById('timedInputH').value);
+            const userK = parseMathInput(document.getElementById('timedInputK').value);
+
+            const target = state.timedProblem;
+            const matchesA = Math.abs(userA - target.a) < 0.001;
+            const matchesH = Math.abs(userH - target.h) < 0.001;
+            const matchesK = Math.abs(userK - target.k) < 0.001;
+
+            const fb = document.getElementById('timedFeedback');
+
+            if (matchesA && matchesH && matchesK) {
+                soundEngine.playCorrect();
+                state.timedStreak++;
+                if (state.timedStreak >= 5) state.timedMultiplier = 3.0;
+                else if (state.timedStreak >= 3) state.timedMultiplier = 2.0;
+                else if (state.timedStreak >= 2) state.timedMultiplier = 1.5;
+
+                const pts = Math.round(100 * state.timedMultiplier);
+                state.timedScore += pts;
+                updateGlobalScore(pts);
+
+                fb.className = "text-center text-sm font-semibold text-emerald-400";
+                fb.textContent = `+${pts} pts! Great speed!`;
+            } else {
+                soundEngine.playIncorrect();
+                state.timedStreak = 0;
+                state.timedMultiplier = 1.0;
+                fb.className = "text-center text-sm font-semibold text-rose-400";
+                fb.textContent = `Incorrect! Ans: a=${target.a}, h=${toTexFraction(target.h)}, k=${toTexFraction(target.k)}`;
+            }
+
+            updateTimedUI();
+            loadTimedProblem();
+        }
+
+        function updateTimedUI() {
+            document.getElementById('timeLeftText').textContent = `${state.timeLeft}s`;
+            document.getElementById('timedCurrentScore').textContent = state.timedScore;
+            document.getElementById('timedCurrentStreak').textContent = `${state.timedStreak} 🔥`;
+            document.getElementById('timedCurrentMultiplier').textContent = `${state.timedMultiplier.toFixed(1)}x`;
+
+            const maxTime = parseInt(document.getElementById('challengeTimerSelect').value) || 60;
+            const pct = Math.max(0, (state.timeLeft / maxTime) * 100);
+            document.getElementById('timerBar').style.width = `${pct}%`;
+        }
+
+        function endTimedChallenge() {
+            clearInterval(state.timedTimer);
+            state.timedActive = false;
+
+            document.getElementById('startChallengeBtn').disabled = false;
+            document.getElementById('timedInputA').disabled = true;
+            document.getElementById('timedInputH').disabled = true;
+            document.getElementById('timedInputK').disabled = true;
+            document.getElementById('timedSubmitBtn').disabled = true;
+
+            const fb = document.getElementById('timedFeedback');
+            fb.className = "text-center text-base font-bold text-amber-400";
+            fb.textContent = `🏆 Challenge Complete! Final Score: ${state.timedScore} pts!`;
+        }
+
+        // Visual Geometric Algebra Tiles Helper Mode
+        function renderVisualDiagram() {
+            const xVal = parseInt(document.getElementById('sliderX').value) || 4;
+            const bVal = parseInt(document.getElementById('sliderB').value) || 6;
+            const halfB = bVal / 2;
+
+            document.getElementById('visualValX').textContent = xVal;
+            document.getElementById('visualValB').textContent = bVal;
+
+            const svg = document.getElementById('algebraTilesSvg');
+            svg.innerHTML = '';
+
+            const scale = 20; // 1 unit = 20px
+            const startX = 40;
+            const startY = 40;
+
+            const xPx = xVal * scale;
+            const halfBPx = halfB * scale;
+
+            const step = state.visualStep;
+
+            if (step === 1) {
+                document.getElementById('visualStepCaption').textContent = `Step 1: Original Expression x² - ${bVal}x represented geometrically.`;
+                renderMath(`x^2 - ${bVal}x`, 'visualMathFormula');
+
+                svg.appendChild(createSvgRect(startX, startY, xPx, xPx, '#6366f1', 'x²'));
+                svg.appendChild(createSvgRect(startX + xPx + 5, startY, halfBPx * 2, xPx, '#10b981', `-${bVal}x`));
+            } else if (step === 2) {
+                document.getElementById('visualStepCaption').textContent = `Step 2: Split linear term -${bVal}x into two equal halves of area -${halfB}x each.`;
+                renderMath(`x^2 - ${halfB}x - ${halfB}x`, 'visualMathFormula');
+
+                svg.appendChild(createSvgRect(startX, startY, xPx, xPx, '#6366f1', 'x²'));
+                svg.appendChild(createSvgRect(startX + xPx + 5, startY, halfBPx, xPx, '#10b981', `-${halfB}x`));
+                svg.appendChild(createSvgRect(startX + xPx + halfBPx + 10, startY, halfBPx, xPx, '#10b981', `-${halfB}x`));
+            } else if (step === 3) {
+                document.getElementById('visualStepCaption').textContent = `Step 3: Rearrange one -${halfB}x strip to top to form an L-shape around x².`;
+                renderMath(`x^2 - 2\\cdot(${halfB}x)`, 'visualMathFormula');
+
+                svg.appendChild(createSvgRect(startX, startY + halfBPx + 5, xPx, xPx, '#6366f1', 'x²'));
+                svg.appendChild(createSvgRect(startX + xPx + 5, startY + halfBPx + 5, halfBPx, xPx, '#10b981', `-${halfB}x`));
+                svg.appendChild(createSvgRect(startX, startY, xPx, halfBPx, '#10b981', `-${halfB}x`));
+            } else if (step === 4) {
+                document.getElementById('visualStepCaption').textContent = `Step 4: Notice the empty missing corner of area (${halfB})² = ${halfB * halfB} needed to form a complete square!`;
+                renderMath(`\\text{Missing Corner Area: } h^2 = (${halfB})^2 = ${halfB * halfB}`, 'visualMathFormula');
+
+                svg.appendChild(createSvgRect(startX, startY + halfBPx + 5, xPx, xPx, '#6366f1', 'x²'));
+                svg.appendChild(createSvgRect(startX + xPx + 5, startY + halfBPx + 5, halfBPx, xPx, '#10b981', `-${halfB}x`));
+                svg.appendChild(createSvgRect(startX, startY, xPx, halfBPx, '#10b981', `-${halfB}x`));
+                svg.appendChild(createSvgDashedRect(startX + xPx + 5, startY, halfBPx, halfBPx, '#f59e0b', `+${halfB * halfB}`));
+            } else if (step === 5) {
+                document.getElementById('visualStepCaption').textContent = `Step 5: Fill corner with +${halfB * halfB} to complete square (x - ${halfB})², then subtract ${halfB * halfB} outside!`;
+                renderMath(`\\left(x - ${halfB}\\right)^2 - ${halfB * halfB}`, 'visualMathFormula');
+
+                svg.appendChild(createSvgRect(startX, startY + halfBPx + 5, xPx, xPx, '#6366f1', 'x²'));
+                svg.appendChild(createSvgRect(startX + xPx + 5, startY + halfBPx + 5, halfBPx, xPx, '#10b981', `-${halfB}x`));
+                svg.appendChild(createSvgRect(startX, startY, xPx, halfBPx, '#10b981', `-${halfB}x`));
+                svg.appendChild(createSvgRect(startX + xPx + 5, startY, halfBPx, halfBPx, '#f59e0b', `${halfB * halfB}`));
+            }
+        }
+
+        function createSvgRect(x, y, w, h, color, text) {
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', x);
+            rect.setAttribute('y', y);
+            rect.setAttribute('width', w);
+            rect.setAttribute('height', h);
+            rect.setAttribute('rx', 6);
+            rect.setAttribute('fill', color);
+            rect.setAttribute('fill-opacity', '0.8');
+            rect.setAttribute('stroke', color);
+            rect.setAttribute('stroke-width', '2');
+
+            const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            txt.setAttribute('x', x + w / 2);
+            txt.setAttribute('y', y + h / 2 + 4);
+            txt.setAttribute('text-anchor', 'middle');
+            txt.setAttribute('fill', '#ffffff');
+            txt.setAttribute('font-size', '12');
+            txt.setAttribute('font-weight', 'bold');
+            txt.textContent = text;
+
+            g.appendChild(rect);
+            g.appendChild(txt);
+            return g;
+        }
+
+        function createSvgDashedRect(x, y, w, h, color, text) {
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', x);
+            rect.setAttribute('y', y);
+            rect.setAttribute('width', w);
+            rect.setAttribute('height', h);
+            rect.setAttribute('rx', 6);
+            rect.setAttribute('fill', 'none');
+            rect.setAttribute('stroke', color);
+            rect.setAttribute('stroke-width', '2');
+            rect.setAttribute('stroke-dasharray', '4');
+
+            const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            txt.setAttribute('x', x + w / 2);
+            txt.setAttribute('y', y + h / 2 + 4);
+            txt.setAttribute('text-anchor', 'middle');
+            txt.setAttribute('fill', color);
+            txt.setAttribute('font-size', '11');
+            txt.setAttribute('font-weight', 'bold');
+            txt.textContent = text;
+
+            g.appendChild(rect);
+            g.appendChild(txt);
+            return g;
+        }
+
+        function setVisualStep(stepNum) {
+            state.visualStep = stepNum;
+            for (let i = 1; i <= 5; i++) {
+                const btn = document.getElementById(`vStep${i}`);
+                if (i === stepNum) {
+                    btn.className = "v-step-btn px-3 py-2 rounded-xl text-left text-xs font-medium bg-indigo-600 text-white shadow";
+                } else {
+                    btn.className = "v-step-btn px-3 py-2 rounded-xl text-left text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700";
+                }
+            }
+            renderVisualDiagram();
+        }
+
+        // Teacher Sandbox Functions
+        function calculateSandboxSolution() {
+            const a = parseFloat(document.getElementById('sandboxA').value) || 1;
+            const b = parseFloat(document.getElementById('sandboxB').value) || 0;
+            const c = parseFloat(document.getElementById('sandboxC').value) || 0;
+
+            const h = -b / (2 * a);
+            const k = c - a * h * h;
+
+            const prob = { a, b, c, h, k };
+
+            renderMath(formatVertexTex(a, h, k), 'sandboxResultMath');
+            const contentEl = document.getElementById('sandboxBreakdownContent');
+            contentEl.innerHTML = generateStepBreakdownHTML(prob);
+            renderMathInElement(contentEl);
+        }
+
+        function toggleSmartboardView() {
+            state.smartboardMode = !state.smartboardMode;
+            const container = document.getElementById('sandboxMainContainer');
+            if (state.smartboardMode) {
+                container.classList.add('fixed', 'inset-0', 'z-50', 'bg-slate-950', 'p-12', 'overflow-y-auto');
+            } else {
+                container.classList.remove('fixed', 'inset-0', 'z-50', 'bg-slate-950', 'p-12', 'overflow-y-auto');
+            }
+        }
+
+        // Printable Worksheet Modal & Generator
+        function openWorksheetModal() {
+            document.getElementById('worksheetModal').classList.remove('hidden');
+        }
+
+        function closeWorksheetModal() {
+            document.getElementById('worksheetModal').classList.add('hidden');
+        }
+
+        function generateAndPrintWorksheet() {
+            const title = document.getElementById('wsTitleInput').value || 'Completing the Square Practice Sheet';
+            const count = parseInt(document.getElementById('wsCountSelect').value) || 10;
+            const mix = document.getElementById('wsLevelSelect').value;
+
+            let problems = [];
+            for (let i = 0; i < count; i++) {
+                let lvl = 1;
+                if (mix === 'level2') lvl = 2;
+                else if (mix === 'level3') lvl = 3;
+                else if (mix === 'mixed') lvl = (i % 3) + 1;
+
+                problems.push(generateProblem(lvl));
+            }
+
+            let wsHTML = `
+                <div style="font-family: sans-serif; padding: 20px; color: black; background: white;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 20px;">
+                        <div>
+                            <h1 style="font-size: 20px; font-weight: bold; margin: 0;">${title}</h1>
+                            <p style="font-size: 12px; color: #555; margin: 4px 0 0 0;">Convert each quadratic expression to vertex form <i>a</i>(<i>x</i> - <i>h</i>)² + <i>k</i>.</p>
+                        </div>
+                        <div style="font-size: 12px; text-align: right;">
+                            <div><strong>Name:</strong> ___________________</div>
+                            <div style="margin-top: 5px;"><strong>Date:</strong> ___________________</div>
+                            <div style="margin-top: 5px;"><strong>Score:</strong> ______ / ${count}</div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
+            `;
+
+            problems.forEach((p, idx) => {
+                wsHTML += `
+                    <div style="border: 1px solid #ccc; border-radius: 8px; padding: 15px; min-height: 120px;">
+                        <div style="font-weight: bold; font-size: 14px; margin-bottom: 10px;">Problem ${idx + 1}:</div>
+                        <div style="font-size: 18px; text-align: center; margin-bottom: 15px;">
+                            $${formatStandardTex(p.a, p.b, p.c)}$
+                        </div>
+                        <div style="font-size: 12px; color: #666; margin-top: 40px;">Answer: _______________________</div>
+                    </div>
+                `;
+            });
+
+            wsHTML += `
+                    </div>
+
+                    <!-- Answer Key Section -->
+                    <div style="page-break-before: always; padding-top: 20px;">
+                        <h2 style="font-size: 18px; font-weight: bold; border-bottom: 2px solid black; padding-bottom: 5px; margin-bottom: 15px;">Teacher Answer Key</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            `;
+
+            problems.forEach((p, idx) => {
+                wsHTML += `
+                    <div style="font-size: 13px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-family: monospace;">
+                        <strong>Q${idx + 1}:</strong> $${formatStandardTex(p.a, p.b, p.c)} \\implies$ <strong>$${formatVertexTex(p.a, p.h, p.k)}$</strong>
+                    </div>
+                `;
+            });
+
+            wsHTML += `
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const printArea = document.getElementById('printableWorksheetArea');
+            printArea.innerHTML = wsHTML;
+            renderMathInElement(printArea);
+
+            closeWorksheetModal();
+
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        }
+
+        // Helper to render KaTeX formulas inside element recursively
+        function renderMathInElement(container) {
+            if (!container) return;
+            const textNodes = [];
+            const walk = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+            let n;
+            while (n = walk.nextNode()) {
+                if (n.nodeValue.includes('$')) textNodes.push(n);
+            }
+
+            textNodes.forEach(node => {
+                const text = node.nodeValue;
+                const parent = node.parentNode;
+                if (!parent) return;
+
+                const parts = text.split('$');
+                if (parts.length >= 3) {
+                    const frag = document.createDocumentFragment();
+                    for (let i = 0; i < parts.length; i++) {
+                        if (i % 2 === 1) {
+                            const mathSpan = document.createElement('span');
+                            renderMath(parts[i], mathSpan, false);
+                            frag.appendChild(mathSpan);
+                        } else {
+                            frag.appendChild(document.createTextNode(parts[i]));
+                        }
+                    }
+                    parent.replaceChild(frag, node);
+                }
+            });
+        }
+
+        // Global Score & Tab Management
+        function updateGlobalScore(addPts) {
+            const el = document.getElementById('globalScoreText');
+            let current = parseInt(el.textContent) || 0;
+            current += addPts;
+            el.textContent = current;
+        }
+
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`${tabId}Mode`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.className = "nav-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all duration-200";
+            });
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) activeBtn.className = "nav-tab px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-indigo-600 text-white shadow";
+
+            // Mobile active state
+            document.querySelectorAll('[id^="mob-tab-"]').forEach(btn => {
+                btn.className = "px-2.5 py-1 rounded-md text-slate-400";
+            });
+            const mobActive = document.getElementById(`mob-tab-${tabId}`);
+            if (mobActive) mobActive.className = "px-2.5 py-1 rounded-md bg-indigo-600 text-white";
+
+            if (tabId === 'visual') {
+                renderVisualDiagram();
+            } else if (tabId === 'teacher') {
+                calculateSandboxSolution();
+            }
+        }
+
+        // App Initialization
+        window.onload = function() {
+            setGuidedLevel(1);
+            calculateSandboxSolution();
+            renderVisualDiagram();
+            renderMathInElement(document.body);
+        };
+    </script>
+</body>
+</html>
