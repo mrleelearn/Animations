@@ -21,6 +21,7 @@ Click on any animations below to view it:
 
 ## Quadratic Functions
 - [Quadratic Game](quadratic_game.html)
+- [Completing the Square Game](completing_the_square_math_mastery_v1.html)
 
 ## Solving Equations
 - [Quadratic](animate_subject_sub_quadratic.html)
