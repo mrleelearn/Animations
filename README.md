@@ -6,6 +6,9 @@ Click on any animations below to view it:
 - [Circumcentre](circumcentre_animation.html)
 - [Angle Bisector](Angle%20bisector%20game.html)
 
+## Coordinate Geometry
+- [Coordinate Quest](coordinate-geometry-quest.html)
+
 ## Trigonometry Animations
 - [Sine Wave](sine_wave.html)
 - [Guitar String Plucking](guitar_string_vibration_graphing.html)
