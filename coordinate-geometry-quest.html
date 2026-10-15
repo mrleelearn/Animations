@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coordinate Geometry Quest — Grade 9 Game</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #cgq-root { max-width: 640px; width: 100%; }
+  #cgq-root button, #cgq-root input { font: inherit; }
+  .cgq-screen { display: none; }
+  .cgq-screen.active { display: block; }
+  .cgq-card {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 20px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .cgq-title { font-size: 20px; font-weight: 600; margin: 0 0 4px 0; }
+  .cgq-sub { font-size: 14px; color: #666; margin: 0 0 16px 0; }
+  .cgq-hud { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .cgq-stat {
+    flex: 1; min-width: 80px;
+    border: 1px solid #ddd;
+    border-radius: 10px; padding: 8px 12px;
+    background: #fafafa;
+  }
+  .cgq-stat .cgq-stat-label { font-size: 12px; color: #888; }
+  .cgq-stat .cgq-stat-value { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .cgq-progress-wrap {
+    height: 6px; border-radius: 3px;
+    background: #e0e0e0; overflow: hidden; margin-bottom: 16px;
+  }
+  .cgq-progress-bar {
+    height: 100%; border-radius: 3px;
+    background: #1a1a1a;
+    transition: width 0.25s ease-out;
+    width: 0%;
+  }
+  .cgq-qtype {
+    display: inline-block; font-size: 12px; padding: 2px 8px;
+    border-radius: 6px; margin-bottom: 8px;
+    background: #e8f0fe; color: #1a1a1a;
+  }
+  .cgq-question { font-size: 16px; line-height: 24px; margin: 0 0 16px 0; }
+  .cgq-opts { display: flex; flex-direction: column; gap: 8px; }
+  .cgq-opt {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer; text-align: left;
+    transition: background 0.15s ease-out, border-color 0.15s ease-out;
+    color: #1a1a1a; font-size: 15px;
+  }
+  .cgq-opt:hover:not(:disabled) { background: #f5f5f5; border-color: #aaa; }
+  .cgq-opt:disabled { cursor: default; }
+  .cgq-opt .cgq-opt-key {
+    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid #ddd;
+    font-size: 13px; font-weight: 600;
+    color: #666;
+    background: #fafafa;
+  }
+  .cgq-opt.correct { border-color: #2e7d32; background: #e8f5e9; }
+  .cgq-opt.correct .cgq-opt-key { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+  .cgq-opt.wrong { border-color: #c62828; background: #ffebee; }
+  .cgq-opt.wrong .cgq-opt-key { background: #c62828; color: #fff; border-color: #c62828; }
+  .cgq-feedback {
+    margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+    font-size: 14px; display: none;
+  }
+  .cgq-feedback.show { display: block; }
+  .cgq-feedback.good { background: #e8f5e9; color: #1a1a1a; }
+  .cgq-feedback.bad { background: #ffebee; color: #1a1a1a; }
+  .cgq-btn {
+    padding: 10px 20px; border-radius: 10px;
+    border: 1px solid #1a1a1a;
+    background: #1a1a1a; color: #fff;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: opacity 0.15s ease-out;
+  }
+  .cgq-btn:hover { opacity: 0.85; }
+  .cgq-btn-row { display: flex; gap: 8px; margin-top: 16px; }
+  .cgq-hearts { font-size: 16px; letter-spacing: 2px; }
+  .cgq-result-big {
+    font-size: 42px; font-weight: 600; text-align: center;
+    margin: 8px 0; font-variant-numeric: tabular-nums;
+  }
+  .cgq-review-item {
+    border: 1px solid #ddd; border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 8px; font-size: 14px;
+  }
+  .cgq-review-item .cgq-review-q { margin-bottom: 4px; }
+  .cgq-review-item.ok .cgq-review-a { color: #2e7d32; }
+  .cgq-review-item.miss .cgq-review-a { color: #c62828; }
+  .cgq-streak { font-size: 13px; color: #666; margin-top: 8px; }
+  .cgq-streak.hot { color: #e65100; }
+  .cgq-chip {
+    font-size: 13px; padding: 4px 10px; border-radius: 6px;
+    background: #f0f0f0; color: #555;
+  }
+</style>
+</head>
+<body>
+<div id="cgq-root">
+
+  <!-- START SCREEN -->
+  <div class="cgq-screen active" id="cgq-start">
+    <div class="cgq-card" style="text-align:center;">
+      <div style="font-size:42px;font-weight:600;margin-bottom:4px;">📐</div>
+      <h2 class="cgq-title">Coordinate geometry quest</h2>
+      <p class="cgq-sub" style="margin-left:auto;margin-right:auto;max-width:400px;">
+        20 questions · distance, slope, mid-point, section formula and more.
+        Answer fast, build streaks, and protect your hearts!
+      </p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;">
+        <span class="cgq-chip">❤️ 3 lives</span>
+        <span class="cgq-chip">🔥 streak bonus</span>
+        <span class="cgq-chip">⭐ 10 pts per question</span>
+      </div>
+      <button class="cgq-btn" onclick="cgqStart()">Start quest</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div class="cgq-screen" id="cgq-game">
+    <div class="cgq-hud">
+      <div class="cgq-stat"><div class="cgq-stat-label">Score</div><div class="cgq-stat-value" id="cgq-score">0</div></div>
+      <div class="cgq-stat"><div class="cgq-stat-label">Streak</div><div class="cgq-stat-value" id="cgq-streak">0</div></div>
+      <div class="cgq-stat"><div class="cgq-stat-label">Question</div><div class="cgq-stat-value" id="cgq-qnum">1/20</div></div>
+      <div class="cgq-stat"><div class="cgq-stat-label">Lives</div><div class="cgq-stat-value cgq-hearts" id="cgq-lives">❤️❤️❤️</div></div>
+    </div>
+    <div class="cgq-progress-wrap"><div class="cgq-progress-bar" id="cgq-bar"></div></div>
+    <div class="cgq-card">
+      <span class="cgq-qtype" id="cgq-type">Multiple choice</span>
+      <p class="cgq-question" id="cgq-qtext"></p>
+      <div class="cgq-opts" id="cgq-opts"></div>
+      <div class="cgq-feedback" id="cgq-feedback"></div>
+      <div class="cgq-streak" id="cgq-streakmsg"></div>
+      <div class="cgq-btn-row" id="cgq-nextrow" style="display:none;">
+        <button class="cgq-btn" id="cgq-nextbtn" onclick="cgqNext()">Next question →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="cgq-screen" id="cgq-result">
+    <div class="cgq-card" style="text-align:center;">
+      <div id="cgq-emoji" style="font-size:42px;margin-bottom:4px;">🏆</div>
+      <h2 class="cgq-title" id="cgq-resulttitle">Quest complete!</h2>
+      <div class="cgq-result-big" id="cgq-finalscore">0</div>
+      <p class="cgq-sub" id="cgq-resultmsg"></p>
+      <div style="display:flex;gap:8px;justify-content:center;margin:16px 0;flex-wrap:wrap;">
+        <span class="cgq-chip" id="cgq-stat-correct" style="background:#f0f0f0;color:#1a1a1a;font-size:14px;padding:6px 12px;"></span>
+        <span class="cgq-chip" id="cgq-stat-streak" style="background:#f0f0f0;color:#1a1a1a;font-size:14px;padding:6px 12px;"></span>
+        <span class="cgq-chip" id="cgq-stat-acc" style="background:#f0f0f0;color:#1a1a1a;font-size:14px;padding:6px 12px;"></span>
+      </div>
+      <div id="cgq-review" style="text-align:left;max-height:260px;overflow-y:auto;margin-top:8px;"></div>
+      <div class="cgq-btn-row" style="justify-content:center;">
+        <button class="cgq-btn" onclick="cgqStart()">Play again</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const CGQ_QUESTIONS = [
+  { type:'mcq', q:'Find the distance between A(−3, 4) and B(1, 1).', opts:['3 units','4 units','5 units','7 units'], ans:2 },
+  { type:'mcq', q:'Find the slope of the line passing through P(2, 5) and Q(6, 13).', opts:['1/2','2','8','4'], ans:1 },
+  { type:'mcq', q:'A line passes through (1, 2) and (4, 11). Which line is parallel to it?', opts:['Through (0, 5) and (2, 11)','Through (0, 5) and (2, 9)','Through (0, 5) and (3, 6)','Through (0, 5) and (1, 2)'], ans:0 },
+  { type:'mcq', q:'Line L has slope 2/3. Which slope makes another line perpendicular to L?', opts:['2/3','3/2','−3/2','−2/3'], ans:2 },
+  { type:'mcq', q:'Find the mid-point of A(−6, 10) and B(2, −4).', opts:['(−2, 3)','(−4, 6)','(2, −3)','(4, −7)'], ans:0 },
+  { type:'mcq', q:'A(−5, −5), B(10, 10). P lies on AB with AP : PB = 2 : 3. Find P.', opts:['(−2, −2)','(0, 0)','(1, 1)','(4, 4)'], ans:2 },
+  { type:'mcq', q:'A line has slope 1. What is its inclination with the horizontal?', opts:['30°','45°','60°','90°'], ans:1 },
+  { type:'mcq', q:'Given A(0, 0), B(2, 4), C(5, 10), which statement is true?', opts:['A, B, C are collinear — slope AB = slope BC','A, B, C are not collinear','AB is perpendicular to BC','AB is parallel to the x-axis'], ans:0 },
+  { type:'mcq', q:'Which pair of points gives a line with undefined slope?', opts:['(3, 1) and (3, 7)','(3, 1) and (7, 1)','(1, 3) and (3, 1)','(0, 0) and (4, 4)'], ans:0 },
+  { type:'mcq', q:'M(4, −1) is the mid-point of P(x, 3) and Q(10, y). Find x + y.', opts:['−7','3','7','−3'], ans:0 },
+  { type:'tf', q:'The distance between two points can be negative if both points have negative coordinates.', opts:['True','False'], ans:1 },
+  { type:'tf', q:'If two points have the same y-coordinate, the line joining them is horizontal with slope 0.', opts:['True','False'], ans:0 },
+  { type:'tf', q:'If two points have the same x-coordinate, the slope of the line joining them is 0.', opts:['True','False'], ans:1 },
+  { type:'tf', q:'Two lines with equal slopes are parallel.', opts:['True','False'], ans:0 },
+  { type:'tf', q:'If the product of the slopes of two lines is −1, the lines are perpendicular.', opts:['True','False'], ans:0 },
+  { type:'tf', q:'The slope of a line is defined as (change in x) ÷ (change in y).', opts:['True','False'], ans:1 },
+  { type:'tf', q:'The mid-point of a segment always lies exactly halfway between its endpoints.', opts:['True','False'], ans:0 },
+  { type:'tf', q:'In the section formula, if AP : PB = 1 : 1, then P is the mid-point of AB.', opts:['True','False'], ans:0 },
+  { type:'tf', q:'A line with an inclination of 90° has a slope of 0.', opts:['True','False'], ans:1 },
+  { type:'tf', q:'Three points are collinear if the slope between every pair is the same.', opts:['True','False'], ans:0 },
+];
+
+let cgqIdx, cgqScore, cgqStreak, cgqLives, cgqCorrect, cgqBest, cgqResults, cgqAnswered;
+
+function cgqStart() {
+  cgqIdx = 0; cgqScore = 0; cgqStreak = 0; cgqLives = 3;
+  cgqCorrect = 0; cgqBest = 0; cgqResults = []; cgqAnswered = false;
+  cgqShow('cgq-game');
+  cgqRender();
+}
+
+function cgqShow(id) {
+  document.querySelectorAll('.cgq-screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function cgqRender() {
+  cgqAnswered = false;
+  const item = CGQ_QUESTIONS[cgqIdx];
+  document.getElementById('cgq-score').textContent = cgqScore;
+  document.getElementById('cgq-streak').textContent = cgqStreak;
+  document.getElementById('cgq-qnum').textContent = (cgqIdx + 1) + '/20';
+  document.getElementById('cgq-lives').textContent = '❤️'.repeat(cgqLives) + '🖤'.repeat(Math.max(0, 3 - cgqLives));
+  document.getElementById('cgq-bar').style.width = ((cgqIdx) / 20 * 100) + '%';
+  document.getElementById('cgq-type').textContent = item.type === 'mcq' ? 'Multiple choice · Q' + (cgqIdx + 1) : 'True or false · Q' + (cgqIdx + 1);
+  document.getElementById('cgq-qtext').textContent = item.q;
+  document.getElementById('cgq-feedback').className = 'cgq-feedback';
+  document.getElementById('cgq-feedback').textContent = '';
+  document.getElementById('cgq-streakmsg').textContent = '';
+  document.getElementById('cgq-streakmsg').className = 'cgq-streak';
+  document.getElementById('cgq-nextrow').style.display = 'none';
+
+  const keys = ['A', 'B', 'C', 'D'];
+  const optsDiv = document.getElementById('cgq-opts');
+  optsDiv.innerHTML = '';
+  item.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'cgq-opt';
+    btn.innerHTML = '<span class="cgq-opt-key">' + keys[i] + '</span><span>' + opt + '</span>';
+    btn.onclick = () => cgqAnswer(i, btn);
+    optsDiv.appendChild(btn);
+  });
+}
+
+function cgqAnswer(i, btn) {
+  if (cgqAnswered) return;
+  cgqAnswered = true;
+  const item = CGQ_QUESTIONS[cgqIdx];
+  const opts = document.querySelectorAll('#cgq-opts .cgq-opt');
+  opts.forEach(o => o.disabled = true);
+  const fb = document.getElementById('cgq-feedback');
+  const correct = i === item.ans;
+
+  if (correct) {
+    btn.classList.add('correct');
+    cgqStreak++;
+    cgqBest = Math.max(cgqBest, cgqStreak);
+    const bonus = cgqStreak >= 3 ? 5 : 0;
+    cgqScore += 10 + bonus;
+    cgqCorrect++;
+    fb.className = 'cgq-feedback show good';
+    fb.textContent = bonus > 0 ? '✅ Correct! +10 pts (+' + bonus + ' streak bonus)' : '✅ Correct! +10 pts';
+    const sm = document.getElementById('cgq-streakmsg');
+    if (cgqStreak >= 3) { sm.textContent = '🔥 ' + cgqStreak + ' in a row — keep it going!'; sm.classList.add('hot'); }
+  } else {
+    btn.classList.add('wrong');
+    opts[item.ans].classList.add('correct');
+    cgqStreak = 0;
+    cgqLives--;
+    fb.className = 'cgq-feedback show bad';
+    const keys = ['A','B','C','D'];
+    fb.textContent = '❌ Not quite. The correct answer is ' + keys[item.ans] + '.';
+  }
+
+  cgqResults.push({ q: item.q, correct: correct, yourAns: item.opts[i], rightAns: item.opts[item.ans] });
+  document.getElementById('cgq-score').textContent = cgqScore;
+  document.getElementById('cgq-streak').textContent = cgqStreak;
+  document.getElementById('cgq-lives').textContent = '❤️'.repeat(Math.max(0,cgqLives)) + '🖤'.repeat(Math.max(0, 3 - cgqLives));
+  document.getElementById('cgq-bar').style.width = ((cgqIdx + 1) / 20 * 100) + '%';
+
+  const nextBtn = document.getElementById('cgq-nextbtn');
+  if (cgqLives <= 0) {
+    nextBtn.textContent = 'See results';
+    nextBtn.onclick = () => cgqEnd(true);
+  } else if (cgqIdx === 19) {
+    nextBtn.textContent = 'Finish quest →';
+    nextBtn.onclick = () => cgqEnd(false);
+  } else {
+    nextBtn.textContent = 'Next question →';
+    nextBtn.onclick = cgqNext;
+  }
+  document.getElementById('cgq-nextrow').style.display = 'flex';
+}
+
+function cgqNext() {
+  cgqIdx++;
+  cgqRender();
+}
+
+function cgqEnd(gameOver) {
+  cgqShow('cgq-result');
+  document.getElementById('cgq-finalscore').textContent = cgqScore;
+  const acc = Math.round(cgqCorrect / cgqResults.length * 100);
+  document.getElementById('cgq-stat-correct').textContent = '✅ ' + cgqCorrect + ' / ' + cgqResults.length + ' correct';
+  document.getElementById('cgq-stat-streak').textContent = '🔥 Best streak: ' + cgqBest;
+  document.getElementById('cgq-stat-acc').textContent = '🎯 Accuracy: ' + acc + '%';
+
+  let emoji, title, msg;
+  if (gameOver) {
+    emoji = '💔'; title = 'Out of lives!';
+    msg = 'You ran out of hearts on question ' + (cgqIdx + 1) + ' of 20. Review the misses below and try again!';
+  } else if (acc >= 90) {
+    emoji = '🏆'; title = 'Geometry master!';
+    msg = 'Outstanding work — you conquered the coordinate plane!';
+  } else if (acc >= 70) {
+    emoji = '🌟'; title = 'Great job!';
+    msg = 'Solid skills! A little more practice and you\'ll be unstoppable.';
+  } else if (acc >= 50) {
+    emoji = '💪'; title = 'Good effort!';
+    msg = 'You\'re getting there. Check the review below to see what to brush up on.';
+  } else {
+    emoji = '📚'; title = 'Keep practicing!';
+    msg = 'Review the answer key below, then give it another go.';
+  }
+  document.getElementById('cgq-emoji').textContent = emoji;
+  document.getElementById('cgq-resulttitle').textContent = title;
+  document.getElementById('cgq-resultmsg').textContent = msg;
+
+  const review = document.getElementById('cgq-review');
+  review.innerHTML = '';
+  cgqResults.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'cgq-review-item ' + (r.correct ? 'ok' : 'miss');
+    div.innerHTML = '<div class="cgq-review-q"><b>Q' + (i+1) + '.</b> ' + r.q + '</div>' +
+      '<div class="cgq-review-a">' + (r.correct ? '✓ ' + r.rightAns : '✗ You said: ' + r.yourAns + ' · Correct: ' + r.rightAns) + '</div>';
+    review.appendChild(div);
+  });
+}
+</script>
+</body>
+</html>
